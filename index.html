@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Dialogue & Image Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Style the audio player */
+        audio::-webkit-media-controls-panel {
+            background-color: #eef2ff;
+        }
+        audio::-webkit-media-controls-play-button,
+        audio::-webkit-media-controls-mute-button {
+            color: #4f46e5;
+            border-radius: 50%;
+        }
+        audio::-webkit-media-controls-timeline {
+            background-color: #c7d2fe;
+            border-radius: 25px;
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen py-8">
+
+    <div class="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-8 space-y-8">
+        
+        <!-- Header -->
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 text-center">AI Dialogue & Image Generator</h1>
+            <p class="text-gray-600 mt-1 text-center">Create conversational audio and a title image from a simple prompt.</p>
+        </div>
+        
+        <!-- Controls -->
+        <div class="space-y-6">
+            <!-- Core Inputs -->
+            <div class="space-y-4">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h2 class="text-lg font-semibold text-gray-800">Credentials & Setup</h2>
+                    <button id="use_defaults_btn" class="px-3 py-1 text-xs font-medium text-white bg-gray-500 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">Use Defaults</button>
+                </div>
+                <div>
+                    <label for="project_id_input" class="block text-sm font-medium text-gray-700">Google Cloud Project ID</label>
+                    <input type="text" id="project_id_input" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., qwiklabs-gcp-...">
+                </div>
+                 <div>
+                    <label for="tts_api_key_input" class="block text-sm font-medium text-gray-700">Text-to-Speech & Imagen API Key</label>
+                    <input type="text" id="tts_api_key_input" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Your Google API Key...">
+                </div>
+                <div>
+                    <label for="token_input" class="block text-sm font-medium text-gray-700">Vertex AI Access Token</label>
+                    <textarea id="token_input" rows="2" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Paste your gcloud auth print-access-token here..."></textarea>
+                </div>
+            </div>
+
+            <!-- Audio Content Inputs -->
+            <div class="space-y-4 pt-4 border-t">
+                 <h2 class="text-lg font-semibold text-gray-800 border-b pb-2">Audio Content</h2>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                        <label for="model_select" class="block text-sm font-medium text-gray-700">AI Model for Script</label>
+                        <select id="model_select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <optgroup label="Gemini 2.5">
+                                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                                <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
+                                <option value="gemini-2.5-flash-lite-preview-06-17">Gemini 2.5 Flash-Lite (Preview)</option>
+                            </optgroup>
+                            <optgroup label="Gemini 2.0">
+                                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                                <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite</option>
+                            </optgroup>
+                            <optgroup label="Gemini 1.5">
+                                <option value="gemini-1.5-pro-001">Gemini 1.5 Pro</option>
+                                <option value="gemini-1.5-flash-001">Gemini 1.5 Flash</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                     <div>
+                        <label for="script_length_slider" class="block text-sm font-medium text-gray-700">Max Script Lines: <span id="script_length_value">6</span></label>
+                        <input type="range" id="script_length_slider" min="2" max="20" value="6" class="mt-1 w-full h-10 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                 </div>
+                 <div>
+                    <label for="script_prompt_input" class="block text-sm font-medium text-gray-700">Script & Image Topic</label>
+                    <textarea id="script_prompt_input" rows="2" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., A friendly argument about whether pineapple belongs on pizza."></textarea>
+                </div>
+                <div>
+                    <label for="full_prompt_input" class="block text-sm font-medium text-gray-700">Full AI Prompt (Editable)</label>
+                    <textarea id="full_prompt_input" rows="8" class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                </div>
+            </div>
+
+            <!-- Image Generation Panel -->
+            <div class="space-y-4 pt-4 border-t">
+                <h2 class="text-lg font-semibold text-gray-800 border-b pb-2">Image Generation</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="imagen_model_select" class="block text-sm font-medium text-gray-700">Imagen Model</label>
+                        <select id="imagen_model_select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
+                    </div>
+                    <div>
+                        <label for="aspect_ratio_select" class="block text-sm font-medium text-gray-700">Aspect Ratio</label>
+                        <select id="aspect_ratio_select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="16:9">16:9 (Widescreen)</option>
+                            <option value="9:16">9:16 (Portrait)</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label for="image_style_input" class="block text-sm font-medium text-gray-700">Image Style Prompt</label>
+                    <input type="text" id="image_style_input" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., cinematic, photorealistic, vibrant illustration">
+                </div>
+                <button id="generate_image_btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-md font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                    Generate Image
+                </button>
+                <div id="image_output_area" class="hidden w-full text-center p-4 mt-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <div id="image_loader" class="loader mx-auto"></div>
+                    <img id="generated_image" class="hidden max-w-full mx-auto rounded-lg shadow-md" alt="Generated Image">
+                    <button id="regenerate_image_btn" class="hidden mt-4 py-2 px-4 border border-transparent rounded-md shadow-sm text-md font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                        Regenerate Image
+                    </button>
+                </div>
+            </div>
+
+            <!-- Audio Customization Panel -->
+             <div class="space-y-4 pt-4 border-t">
+                <h2 class="text-lg font-semibold text-gray-800 border-b pb-2">Audio Customization</h2>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="speaking_rate_slider" class="block text-sm font-medium text-gray-700">Speaking Speed: <span id="speaking_rate_value">1.0</span>x</label>
+                        <input type="range" id="speaking_rate_slider" min="0.5" max="1.5" value="1.0" step="0.1" class="mt-1 w-full h-10 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                     <div>
+                        <label for="language_select" class="block text-sm font-medium text-gray-700">Voice Language</label>
+                        <select id="language_select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
+                     </div>
+                 </div>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                        <label for="man_voice_select" class="block text-sm font-medium text-gray-700">Man's Voice</label>
+                        <select id="man_voice_select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
+                     </div>
+                     <div>
+                        <label for="woman_voice_select" class="block text-sm font-medium text-gray-700">Woman's Voice</label>
+                        <select id="woman_voice_select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
+                     </div>
+                 </div>
+            </div>
+        </div>
+
+        <!-- Output Section -->
+        <div class="pt-6 border-t">
+            <div class="flex items-center justify-center space-x-4 mb-4">
+                <div id="loader" class="loader hidden"></div>
+                <div id="status_area" class="text-center text-md text-gray-700 font-medium h-10 flex items-center justify-center">Ready to generate.</div>
+            </div>
+            
+            <div class="space-y-3">
+                <button id="generate_btn" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Generate Audio
+                </button>
+                <audio id="audio_player" class="hidden w-full" controls></audio>
+                <div id="download_buttons_container" class="hidden grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <a id="download_audio_link" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-md font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        Download Audio (MP3)
+                    </a>
+                    <button id="download_script_btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-md font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Download Script (.txt)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Script Display Area -->
+            <div id="script_display_area" class="hidden w-full p-4 mt-6 bg-gray-50 border border-gray-200 rounded-lg">
+                <h3 class="text-md font-semibold text-gray-800 mb-2">Generated Script</h3>
+                <pre id="script_text" class="text-sm text-gray-700 whitespace-pre-wrap font-sans bg-white p-3 rounded-md border"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const LOCATION = "us-central1";
+
+        const imagenModels = {
+            "Imagen 4.0": {
+                "imagen-4.0-ultra-generate-preview-06-06": "Ultra (Highest Quality)",
+                "imagen-4.0-fast-generate-preview-06-06": "Fast (Low Latency)",
+                "imagen-4.0-generate-preview-06-06": "General (Balanced)"
+            },
+            "Imagen 3.0": {
+                "imagen-3.0-generate-002": "GA 002",
+                "imagen-3.0-generate-001": "GA 001",
+                "imagen-3.0-fast-generate-001": "Fast"
+            },
+            "Imagen 2.0": {
+                "imagegeneration@006": "GA 006",
+                "imagegeneration@005": "GA 005"
+            },
+             "Imagen 1.0": {
+                "imagegeneration@002": "GA 002"
+            }
+        };
+
+        const chirpMaleVoiceNames = ["Achird", "Algenib", "Algieba", "Alnilam", "Charon", "Enceladus", "Fenrir", "Iapetus", "Orus", "Puck", "Rasalgethi", "Sadachbia", "Sadaltager", "Schedar", "Umbriel", "Zubenelgenubi"];
+        const chirpFemaleVoiceNames = ["Achernar", "Aoede", "Autonoe", "Callirrhoe", "Despina", "Erinome", "Gacrux", "Kore", "Laomedeia", "Leda", "Pulcherrima", "Sulafat", "Vindemiatrix", "Zephyr"];
+
+        const voicesData = {
+            "en-US": { 
+                description: "English (US)", 
+                male: [ { name: "en-US-Studio-M", description: "Male (Studio M)" }, ...chirpMaleVoiceNames.map(v => ({ name: `en-US-Chirp3-HD-${v}`, description: `Male (${v})` })) ], 
+                female: [ { name: "en-US-Studio-O", description: "Female (Studio O)" }, ...chirpFemaleVoiceNames.map(v => ({ name: `en-US-Chirp3-HD-${v}`, description: `Female (${v})` })) ] 
+            },
+            "en-GB": { 
+                description: "English (UK)", 
+                male: [ { name: "en-GB-Studio-B", description: "Male (Studio B)" }, ...chirpMaleVoiceNames.map(v => ({ name: `en-GB-Chirp3-HD-${v}`, description: `Male (${v})` })) ], 
+                female: [ { name: "en-GB-Studio-A", description: "Female (Studio A)" }, ...chirpFemaleVoiceNames.map(v => ({ name: `en-GB-Chirp3-HD-${v}`, description: `Female (${v})` })) ] 
+            },
+            "es-ES": { 
+                description: "Spanish (Spain)", 
+                male: [ { name: "es-ES-Neural2-B", description: "Male (Neural2 B)" }, ...chirpMaleVoiceNames.map(v => ({ name: `es-ES-Chirp3-HD-${v}`, description: `Male (${v})` })) ], 
+                female: [ { name: "es-ES-Neural2-F", description: "Female (Neural2 F)" }, ...chirpFemaleVoiceNames.map(v => ({ name: `es-ES-Chirp3-HD-${v}`, description: `Female (${v})` })) ] 
+            },
+            "es-US": { 
+                description: "Spanish (US)", 
+                male: chirpMaleVoiceNames.map(v => ({ name: `es-US-Chirp3-HD-${v}`, description: `Male (${v})` })), 
+                female: chirpFemaleVoiceNames.map(v => ({ name: `es-US-Chirp3-HD-${v}`, description: `Female (${v})` })) 
+            },
+            "fr-FR": { 
+                description: "French (France)", 
+                male: [ { name: "fr-FR-Studio-D", description: "Male (Studio D)" }, ...chirpMaleVoiceNames.map(v => ({ name: `fr-FR-Chirp3-HD-${v}`, description: `Male (${v})` })) ], 
+                female: [ { name: "fr-FR-Studio-A", description: "Female (Studio A)" }, ...chirpFemaleVoiceNames.map(v => ({ name: `fr-FR-Chirp3-HD-${v}`, description: `Female (${v})` })) ] 
+            },
+            "fr-CA": { 
+                description: "French (Canada)", 
+                male: chirpMaleVoiceNames.map(v => ({ name: `fr-CA-Chirp3-HD-${v}`, description: `Male (${v})` })), 
+                female: chirpFemaleVoiceNames.map(v => ({ name: `fr-CA-Chirp3-HD-${v}`, description: `Female (${v})` })) 
+            },
+            "de-DE": { 
+                description: "German (Germany)", 
+                male: [ { name: "de-DE-Studio-B", description: "Male (Studio B)" }, ...chirpMaleVoiceNames.map(v => ({ name: `de-DE-Chirp3-HD-${v}`, description: `Male (${v})` })) ], 
+                female: [ { name: "de-DE-Studio-A", description: "Female (Studio A)" }, ...chirpFemaleVoiceNames.map(v => ({ name: `de-DE-Chirp3-HD-${v}`, description: `Female (${v})` })) ] 
+            },
+            "it-IT": { 
+                description: "Italian (Italy)", 
+                male: chirpMaleVoiceNames.map(v => ({ name: `it-IT-Chirp3-HD-${v}`, description: `Male (${v})` })), 
+                female: chirpFemaleVoiceNames.map(v => ({ name: `it-IT-Chirp3-HD-${v}`, description: `Female (${v})` })) 
+            },
+            "pt-BR": { 
+                description: "Portuguese (Brazil)", 
+                male: chirpMaleVoiceNames.map(v => ({ name: `pt-BR-Chirp3-HD-${v}`, description: `Male (${v})` })), 
+                female: chirpFemaleVoiceNames.map(v => ({ name: `pt-BR-Chirp3-HD-${v}`, description: `Female (${v})` })) 
+            },
+            "ja-JP": { 
+                description: "Japanese (Japan)", 
+                male: [ { name: "ja-JP-Wavenet-D", description: "Male (Wavenet D)" }, ...chirpMaleVoiceNames.map(v => ({ name: `ja-JP-Chirp3-HD-${v}`, description: `Male (${v})` })) ], 
+                female: [ { name: "ja-JP-Wavenet-C", description: "Female (Wavenet C)" }, ...chirpFemaleVoiceNames.map(v => ({ name: `ja-JP-Chirp3-HD-${v}`, description: `Female (${v})` })) ] 
+            },
+            "cmn-CN": { 
+                description: "Mandarin Chinese", 
+                male: chirpMaleVoiceNames.map(v => ({ name: `cmn-CN-Chirp3-HD-${v}`, description: `Male (${v})` })), 
+                female: chirpFemaleVoiceNames.map(v => ({ name: `cmn-CN-Chirp3-HD-${v}`, description: `Female (${v})` })) 
+            },
+            "hi-IN": { 
+                description: "Hindi (India)", 
+                male: [ { name: "hi-IN-Wavenet-B", description: "Male (Wavenet B)" }, ...chirpMaleVoiceNames.map(v => ({ name: `hi-IN-Chirp3-HD-${v}`, description: `Male (${v})` })) ], 
+                female: [ { name: "hi-IN-Wavenet-A", description: "Female (Wavenet A)" }, ...chirpFemaleVoiceNames.map(v => ({ name: `hi-IN-Chirp3-HD-${v}`, description: `Female (${v})` })) ] 
+            },
+            "mr-IN": { 
+                description: "Marathi (India)", 
+                male: chirpMaleVoiceNames.map(v => ({ name: `mr-IN-Chirp3-HD-${v}`, description: `Male (${v})` })), 
+                female: chirpFemaleVoiceNames.map(v => ({ name: `mr-IN-Chirp3-HD-${v}`, description: `Female (${v})` })) 
+            },
+            "ar-XA": { 
+                description: "Arabic", 
+                male: chirpMaleVoiceNames.map(v => ({ name: `ar-XA-Chirp3-HD-${v}`, description: `Male (${v})` })), 
+                female: chirpFemaleVoiceNames.map(v => ({ name: `ar-XA-Chirp3-HD-${v}`, description: `Female (${v})` })) 
+            },
+            "bn-IN": { 
+                description: "Bengali (India)", 
+                male: chirpMaleVoiceNames.map(v => ({ name: `bn-IN-Chirp3-HD-${v}`, description: `Male (${v})` })), 
+                female: chirpFemaleVoiceNames.map(v => ({ name: `bn-IN-Chirp3-HD-${v}`, description: `Female (${v})` })) 
+            },
+            "en-AU": { 
+                description: "English (Australia)", 
+                male: chirpMaleVoiceNames.map(v => ({ name: `en-AU-Chirp3-HD-${v}`, description: `Male (${v})` })), 
+                female: chirpFemaleVoiceNames.map(v => ({ name: `en-AU-Chirp3-HD-${v}`, description: `Female (${v})` })) 
+            },
+            "en-IN": { 
+                description: "English (India)", 
+                male: chirpMaleVoiceNames.map(v => ({ name: `en-IN-Chirp3-HD-${v}`, description: `Male (${v})` })), 
+                female: chirpFemaleVoiceNames.map(v => ({ name: `en-IN-Chirp3-HD-${v}`, description: `Female (${v})` })) 
+            },
+            "ta-IN": { 
+                description: "Tamil (India)", 
+                male: chirpMaleVoiceNames.map(v => ({ name: `ta-IN-Chirp3-HD-${v}`, description: `Male (${v})` })), 
+                female: chirpFemaleVoiceNames.map(v => ({ name: `ta-IN-Chirp3-HD-${v}`, description: `Female (${v})` })) 
+            },
+            "te-IN": { 
+                description: "Telugu (India)", 
+                male: chirpMaleVoiceNames.map(v => ({ name: `te-IN-Chirp3-HD-${v}`, description: `Male (${v})` })), 
+                female: chirpFemaleVoiceNames.map(v => ({ name: `te-IN-Chirp3-HD-${v}`, description: `Female (${v})` })) 
+            },
+            "th-TH": { 
+                description: "Thai (Thailand)", 
+                male: chirpMaleVoiceNames.map(v => ({ name: `th-TH-Chirp3-HD-${v}`, description: `Male (${v})` })), 
+                female: chirpFemaleVoiceNames.map(v => ({ name: `th-TH-Chirp3-HD-${v}`, description: `Female (${v})` })) 
+            },
+            "tr-TR": { 
+                description: "Turkish (Turkey)", 
+                male: chirpMaleVoiceNames.map(v => ({ name: `tr-TR-Chirp3-HD-${v}`, description: `Male (${v})` })), 
+                female: chirpFemaleVoiceNames.map(v => ({ name: `tr-TR-Chirp3-HD-${v}`, description: `Female (${v})` })) 
+            },
+            "vi-VN": { 
+                description: "Vietnamese (Vietnam)", 
+                male: chirpMaleVoiceNames.map(v => ({ name: `vi-VN-Chirp3-HD-${v}`, description: `Male (${v})` })), 
+                female: chirpFemaleVoiceNames.map(v => ({ name: `vi-VN-Chirp3-HD-${v}`, description: `Female (${v})` })) 
+            }
+        };
+
+        // --- UI Elements ---
+        const ui = {
+            // Audio
+            generateBtn: document.getElementById('generate_btn'),
+            useDefaultsBtn: document.getElementById('use_defaults_btn'),
+            tokenInput: document.getElementById('token_input'),
+            projectIdInput: document.getElementById('project_id_input'),
+            ttsApiKeyInput: document.getElementById('tts_api_key_input'),
+            scriptPromptInput: document.getElementById('script_prompt_input'),
+            fullPromptInput: document.getElementById('full_prompt_input'),
+            modelSelect: document.getElementById('model_select'),
+            loader: document.getElementById('loader'),
+            downloadAudioLink: document.getElementById('download_audio_link'),
+            downloadScriptBtn: document.getElementById('download_script_btn'),
+            downloadButtonsContainer: document.getElementById('download_buttons_container'),
+            statusArea: document.getElementById('status_area'),
+            speakingRateSlider: document.getElementById('speaking_rate_slider'),
+            speakingRateValue: document.getElementById('speaking_rate_value'),
+            scriptLengthSlider: document.getElementById('script_length_slider'),
+            scriptLengthValue: document.getElementById('script_length_value'),
+            languageSelect: document.getElementById('language_select'),
+            manVoiceSelect: document.getElementById('man_voice_select'),
+            womanVoiceSelect: document.getElementById('woman_voice_select'),
+            scriptDisplayArea: document.getElementById('script_display_area'),
+            scriptText: document.getElementById('script_text'),
+            audioPlayer: document.getElementById('audio_player'),
+            // Image
+            generateImageBtn: document.getElementById('generate_image_btn'),
+            regenerateImageBtn: document.getElementById('regenerate_image_btn'),
+            imagenModelSelect: document.getElementById('imagen_model_select'),
+            aspectRatioSelect: document.getElementById('aspect_ratio_select'),
+            imageStyleInput: document.getElementById('image_style_input'),
+            imageOutputArea: document.getElementById('image_output_area'),
+            imageLoader: document.getElementById('image_loader'),
+            generatedImage: document.getElementById('generated_image'),
+        };
+        
+        // --- Event Listeners ---
+        ui.generateBtn.addEventListener('click', handleAudioGeneration);
+        ui.generateImageBtn.addEventListener('click', handleImageGeneration);
+        ui.regenerateImageBtn.addEventListener('click', handleImageGeneration);
+        ui.useDefaultsBtn.addEventListener('click', fillDefaultCredentials);
+        ui.speakingRateSlider.addEventListener('input', () => ui.speakingRateValue.textContent = parseFloat(ui.speakingRateSlider.value).toFixed(1));
+        ui.scriptLengthSlider.addEventListener('input', () => {
+            ui.scriptLengthValue.textContent = ui.scriptLengthSlider.value;
+            updateFullPrompt();
+        });
+        ui.languageSelect.addEventListener('change', (e) => {
+            populateVoices(e.target.value);
+            updateFullPrompt();
+        });
+        ui.scriptPromptInput.addEventListener('input', updateFullPrompt);
+        ui.downloadScriptBtn.addEventListener('click', downloadScript);
+
+        // --- Functions ---
+        function fillDefaultCredentials() {
+            ui.projectIdInput.value = 'qwiklabs-gcp-04-3b7afe1dd043';
+            ui.ttsApiKeyInput.value = 'AIzaSyBptW0k1XZjQ8bA2_tMWFjLqNfxBWbZN28';
+            ui.tokenInput.value = 'ya29.A0AS3H6NwaqTk9Im7hIyhMM0TRoD2RWoifwr-ERMcdwnaW2QrNhNU2t0aoq24i_XUQ3QwTtPa6jb0mKIWxerI4kk-6Kg6Rhe_e_t2F_wHePJMDYC3i0yLpj6a5twbkKNZEJhrJBKVgkVyvkDq1-nfG_9ofibM8m2ZMLs0fuPrn0F-tFP6f7hjSYfWwdtjkZ4LHCQOQaJubCUg3GOoq-EdbbQw5tGLAK2LO5Vu3DUDWVIlJ6Qf8LWx-_zgmtHeY2Zv8xcvXjXCAbGgUXhnSgX9QkzuOw5dHQTbsjMPk3K6Z8hEVdOlZX-ATmPmU1NWzRCxJ-aj5PMvsmKkhqJqEku5cW8TIWchY09MxPjqb7gaCgYKAZYSARUSFQHGX2MiZ0sLcgngH0qVhmvotrUWGA0365';
+        }
+        
+        function populateLanguages() {
+            ui.languageSelect.innerHTML = '';
+            const sortedLangs = Object.keys(voicesData).sort((a, b) => voicesData[a].description.localeCompare(voicesData[b].description));
+            sortedLangs.forEach(langCode => {
+                const option = document.createElement('option');
+                option.value = langCode;
+                option.textContent = voicesData[langCode].description;
+                ui.languageSelect.appendChild(option);
+            });
+        }
+
+        function populateImagenModels() {
+            ui.imagenModelSelect.innerHTML = '';
+            for (const groupName in imagenModels) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = groupName;
+                for (const modelId in imagenModels[groupName]) {
+                    const option = document.createElement('option');
+                    option.value = modelId;
+                    option.textContent = imagenModels[groupName][modelId];
+                    optgroup.appendChild(option);
+                }
+                ui.imagenModelSelect.appendChild(optgroup);
+            }
+        }
+
+        function populateVoices(langCode) {
+            const language = voicesData[langCode];
+            if (!language) return;
+            const populateSelect = (selectElement, voices) => {
+                selectElement.innerHTML = '';
+                if (voices && voices.length > 0) {
+                    voices.forEach(voice => {
+                        const option = document.createElement('option');
+                        option.value = JSON.stringify({ languageCode: langCode, name: voice.name });
+                        option.textContent = voice.description;
+                        selectElement.appendChild(option);
+                    });
+                    selectElement.disabled = false;
+                } else {
+                    const option = document.createElement('option');
+                    option.textContent = "No voices available";
+                    selectElement.appendChild(option);
+                    selectElement.disabled = true;
+                }
+            };
+            populateSelect(ui.manVoiceSelect, language.male);
+            populateSelect(ui.womanVoiceSelect, language.female);
+        }
+        
+        function updateFullPrompt() {
+            const topic = ui.scriptPromptInput.value;
+            const scriptLength = ui.scriptLengthSlider.value;
+            const selectedLanguageOption = ui.languageSelect.options[ui.languageSelect.selectedIndex];
+            const languageName = selectedLanguageOption ? selectedLanguageOption.textContent.split('(')[0].trim() : "English";
+
+            // New, more detailed system prompt based on user request.
+            // It defines roles (Woman as host, Man as guest) and sets a podcast-like context.
+            const fullPrompt = `You are a world-class podcast producer. Your task is to create an engaging podcast script between a host (Woman) and a guest expert (Man) based on the provided topic.
+
+# Topic:
+"${topic}"
+
+# Instructions:
+1.  **Analyze the Topic:** Identify key points and interesting facts that could drive an engaging conversation.
+2.  **Craft the Dialogue:**
+    - The host (Woman) always initiates and concludes the conversation.
+    - Develop a natural, conversational flow.
+    - The guest's (Man's) responses should be informative and expert-like.
+    - Maintain a PG-rated conversation.
+    - The script should have between 2 and ${scriptLength} lines of dialogue in total.
+3.  **Formatting Rules (VERY IMPORTANT):**
+    - Each line must start with "Woman:" or "Man:". Do not include anything else.
+    - Each line of dialogue must be short, ideally under 100 characters.
+    - Your response must ONLY be the script itself, with no extra text, explanations, or formatting.
+
+# Language:
+- The entire podcast script must be in ${languageName.toUpperCase()}.
+
+Begin the script now.`;
+
+            ui.fullPromptInput.value = fullPrompt;
+        }
+
+
+        async function handleScriptGeneration(prompt, token, projectId, modelId) {
+             const url = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${LOCATION}/publishers/google/models/${modelId}:generateContent`;
+             const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+             const response = await fetch(url, {
+                 method: 'POST',
+                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                 body: JSON.stringify(payload)
+             });
+             if (!response.ok) {
+                 const errorJson = await response.json();
+                 throw new Error(`AI Script Generation failed: ${errorJson.error.message}`);
+             }
+             const result = await response.json();
+             if (!result.candidates || result.candidates.length === 0) {
+                 throw new Error("AI Script Generation returned no content. The model may be unavailable or the token may be expired.");
+             }
+             return result.candidates[0].content.parts[0].text.trim();
+        }
+
+        async function handleAudioGeneration() {
+            const fullPrompt = ui.fullPromptInput.value.trim();
+            const token = ui.tokenInput.value.trim();
+            const projectId = ui.projectIdInput.value.trim();
+            const ttsApiKey = ui.ttsApiKeyInput.value.trim();
+            const modelId = ui.modelSelect.value;
+            if (!fullPrompt || !token || !projectId || !ttsApiKey) {
+                alert("Please fill out all credential fields and provide a script prompt.");
+                return;
+            }
+            ui.downloadButtonsContainer.classList.add('hidden');
+            ui.scriptDisplayArea.classList.add('hidden');
+            ui.audioPlayer.classList.add('hidden');
+            ui.audioPlayer.src = '';
+            ui.loader.classList.remove('hidden');
+            ui.generateBtn.disabled = true;
+            ui.generateBtn.textContent = 'Generating...';
+            ui.statusArea.textContent = 'Starting generation...';
+            try {
+                ui.statusArea.textContent = 'Generating AI script...';
+                const script = await handleScriptGeneration(fullPrompt, token, projectId, modelId);
+                ui.scriptText.textContent = script;
+                ui.scriptDisplayArea.classList.remove('hidden');
+                const dialogueLines = script.split('\n').filter(line => {
+                    const l = line.trim().toLowerCase();
+                    return l.startsWith('man:') || l.startsWith('woman:') || l.startsWith('hombre:') || l.startsWith('mujer:') || l.startsWith('homme:') || l.startsWith('femme:') || l.startsWith('mann:') || l.startsWith('frau:');
+                }).map(line => {
+                    const [speaker, ...text] = line.split(':');
+                    const speakerLower = speaker.trim().toLowerCase();
+                    const speakerKey = (speakerLower.startsWith('man') || speakerLower.startsWith('hombre') || speakerLower.startsWith('homme') || speakerLower.startsWith('mann')) ? 'man' : 'woman';
+                    const sanitizedText = text.join(':').trim().replace(/[`*]/g, '');
+                    return { speaker: speakerKey, text: sanitizedText, audioBlob: null };
+                });
+                if (dialogueLines.length === 0) throw new Error("AI failed to generate a valid script. Check the format.");
+                ui.statusArea.textContent = 'Generating audio for each line...';
+                for (let i = 0; i < dialogueLines.length; i++) {
+                     const line = dialogueLines[i];
+                     ui.statusArea.textContent = `Generating audio ${i + 1}/${dialogueLines.length}...`;
+                     line.audioBlob = await generateAudioBlob(line.text, ttsApiKey, line.speaker);
+                }
+                ui.statusArea.textContent = 'Combining audio files...';
+                const finalAudioBlob = await concatenateAudio(dialogueLines);
+                const audioUrl = URL.createObjectURL(finalAudioBlob);
+                ui.audioPlayer.src = audioUrl;
+                ui.audioPlayer.classList.remove('hidden');
+                ui.downloadAudioLink.href = audioUrl;
+                ui.downloadAudioLink.download = `AI_Dialogue_Audio.mp3`;
+                ui.downloadButtonsContainer.classList.remove('hidden');
+                ui.statusArea.textContent = 'Audio ready!';
+            } catch (error) {
+                console.error("Audio Generation failed:", error);
+                ui.statusArea.textContent = `Error: ${error.message}`;
+                ui.scriptDisplayArea.classList.add('hidden');
+            } finally {
+                ui.loader.classList.add('hidden');
+                ui.generateBtn.disabled = false;
+                ui.generateBtn.textContent = 'Generate Audio';
+            }
+        }
+
+        async function handleImageGeneration() {
+            const topic = ui.scriptPromptInput.value.trim();
+            const style = ui.imageStyleInput.value.trim();
+            const token = ui.tokenInput.value.trim();
+            const projectId = ui.projectIdInput.value.trim();
+            const modelId = ui.imagenModelSelect.value;
+            const aspectRatio = ui.aspectRatioSelect.value;
+
+            if (!topic || !token || !projectId) {
+                alert("Please fill out the Project ID, Access Token, and Topic fields.");
+                return;
+            }
+            
+            const imagePrompt = `${topic}, ${style}`;
+
+            ui.imageOutputArea.classList.remove('hidden');
+            ui.imageLoader.classList.remove('hidden');
+            ui.generatedImage.classList.add('hidden');
+            ui.regenerateImageBtn.classList.add('hidden');
+            ui.generateImageBtn.disabled = true;
+
+            try {
+                const url = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${LOCATION}/publishers/google/models/${modelId}:predict`;
+                const payload = {
+                    instances: [{ prompt: imagePrompt }],
+                    parameters: { 
+                        sampleCount: 1,
+                        aspectRatio: aspectRatio
+                    }
+                };
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const errorJson = await response.json();
+                    throw new Error(`Imagen API failed: ${errorJson.error.message}`);
+                }
+                const result = await response.json();
+                if (!result.predictions || result.predictions.length === 0 || !result.predictions[0].bytesBase64Encoded) {
+                    throw new Error("Imagen API did not return image content.");
+                }
+                const base64Data = result.predictions[0].bytesBase64Encoded;
+                ui.generatedImage.src = `data:image/png;base64,${base64Data}`;
+                ui.generatedImage.classList.remove('hidden');
+                ui.regenerateImageBtn.classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Image generation failed:", error);
+                alert(`Image Generation Error: ${error.message}`);
+                ui.imageOutputArea.classList.add('hidden');
+            } finally {
+                ui.imageLoader.classList.add('hidden');
+                ui.generateImageBtn.disabled = false;
+            }
+        }
+
+        async function generateAudioBlob(text, ttsApiKey, speaker) {
+            const voiceSelect = speaker === 'man' ? ui.manVoiceSelect : ui.womanVoiceSelect;
+            if (voiceSelect.disabled) throw new Error(`Cannot generate audio: No ${speaker} voices available for the selected language.`);
+            const voiceConfig = JSON.parse(voiceSelect.value);
+            const speakingRate = parseFloat(ui.speakingRateSlider.value);
+            const base64 = await fetchTTS(text, ttsApiKey, voiceConfig, speakingRate);
+            return await (await fetch(`data:audio/mp3;base64,${base64}`)).blob();
+        }
+
+        async function fetchTTS(text, ttsApiKey, voiceConfig, speakingRate) {
+            const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${ttsApiKey}`;
+            const body = { 
+                input: { text }, 
+                voice: voiceConfig, 
+                audioConfig: { audioEncoding: 'MP3', speakingRate: speakingRate } 
+            };
+            const response = await fetch(url, { method: 'POST', body: JSON.stringify(body) });
+            if (!response.ok) {
+                 const errorJson = await response.json();
+                 throw new Error(`TTS API failed: ${errorJson.error.message}`);
+            }
+            const result = await response.json();
+            if (!result.audioContent) throw new Error("TTS API did not return audio content.");
+            return result.audioContent;
+        }
+        
+        function downloadScript() {
+            const scriptText = ui.scriptText.textContent;
+            if (!scriptText) {
+                alert("No script has been generated yet.");
+                return;
+            }
+            const blob = new Blob([scriptText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ai_script.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        async function concatenateAudio(dialogueLines) {
+            const audioBlobs = dialogueLines.map(line => line.audioBlob);
+            return new Blob(audioBlobs, { type: 'audio/mp3' });
+        }
+        
+        function initializeApp() {
+            populateLanguages();
+            populateImagenModels();
+            const defaultLang = 'en-US';
+            ui.languageSelect.value = defaultLang;
+            populateVoices(defaultLang);
+            updateFullPrompt();
+        }
+
+        initializeApp();
+    </script>
+</body>
+</html>
