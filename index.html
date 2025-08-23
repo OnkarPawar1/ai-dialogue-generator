@@ -450,9 +450,9 @@
 
         // --- Functions ---
         function fillDefaultCredentials() {
-            ui.projectIdInput.value = 'PROJECT_ID';
-            ui.ttsApiKeyInput.value = 'TTS_API_KEY';
-            ui.tokenInput.value = 'TOKEN';
+            ui.projectIdInput.value = 'qwiklabs-gcp-04-3b7afe1dd043';
+            ui.ttsApiKeyInput.value = 'AIzaSyBptW0k1XZjQ8bA2_tMWFjLqNfxBWbZN28';
+            ui.tokenInput.value = 'ya29.A0AS3H6NwaqTk9Im7hIyhMM0TRoD2RWoifwr-ERMcdwnaW2QrNhNU2t0aoq24i_XUQ3QwTtPa6jb0mKIWxerI4kk-6Kg6Rhe_e_t2F_wHePJMDYC3i0yLpj6a5twbkKNZEJhrJBKVgkVyvkDq1-nfG_9ofibM8m2ZMLs0fuPrn0F-tFP6f7hjSYfWwdtjkZ4LHCQOQaJubCUg3GOoq-EdbbQw5tGLAK2LO5Vu3DUDWVIlJ6Qf8LWx-_zgmtHeY2Zv8xcvXjXCAbGgUXhnSgX9QkzuOw5dHQTbsjMPk3K6Z8hEVdOlZX-ATmPmU1NWzRCxJ-aj5PMvsmKkhqJqEku5cW8TIWchY09MxPjqb7gaCgYKAZYSARUSFQHGX2MiZ0sLcgngH0qVhmvotrUWGA0365';
         }
         
         function populateLanguages() {
@@ -791,123 +791,159 @@ Begin the script now.`;
 
         // --- UPDATED: Record canvas + generated audio together (no FFmpeg needed) ---
         async function createAnimatedVideo() {
-            const TRANSITION_DURATION_S = 0.7; // crossfade overlapped inside each line
-            const FRAMERATE = 30;
+        const TRANSITION_DURATION_S = 0.7;  // crossfade overlap
+        const FRAMERATE = 30;
 
-            const aspectRatio = ui.aspectRatioSelect.value;
-            const HD_WIDTH = 1920;
-            const HD_HEIGHT = 1080;
-            const canvas = document.createElement('canvas');
-            canvas.width = aspectRatio === '16:9' ? HD_WIDTH : HD_HEIGHT;
-            canvas.height = aspectRatio === '16:9' ? HD_HEIGHT : HD_WIDTH;
-            const ctx = canvas.getContext('2d');
+        const aspectRatio = ui.aspectRatioSelect.value;
+        const HD_WIDTH = 1920;
+        const HD_HEIGHT = 1080;
 
-            // Build video stream from canvas
-            const videoStream = canvas.captureStream(FRAMERATE);
+        // Canvas setup
+        const canvas = document.createElement('canvas');
+        canvas.width = aspectRatio === '16:9' ? HD_WIDTH : HD_HEIGHT;
+        canvas.height = aspectRatio === '16:9' ? HD_HEIGHT : HD_WIDTH;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true; // optional but helps reduce shimmer
 
-            if (!generatedAudioBlob) {
-                throw new Error('No generated audio found. Please generate audio first.');
-            }
+        // Video stream from canvas
+        const videoStream = canvas.captureStream(FRAMERATE);
 
-            // Build audio stream from combined MP3 using Web Audio graph
-            const audioEl = new Audio(URL.createObjectURL(generatedAudioBlob));
-            audioEl.preload = 'auto';
-
-            const AudioCtx = window.AudioContext || window.webkitAudioContext;
-            const audioCtx = new AudioCtx();
-            const sourceNode = audioCtx.createMediaElementSource(audioEl);
-            const destNode = audioCtx.createMediaStreamDestination();
-
-            // Send to both speakers and recorder
-            sourceNode.connect(destNode);
-            sourceNode.connect(audioCtx.destination);
-
-            // Combine into one MediaStream
-            const combined = new MediaStream([
-                ...videoStream.getVideoTracks(),
-                ...destNode.stream.getAudioTracks()
-            ]);
-
-            const mime = 'video/webm;codecs=vp9,opus';
-            const recorder = new MediaRecorder(combined, { mimeType: mime });
-            const chunks = [];
-            recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
-
-            const nextFrame = () => new Promise(req => requestAnimationFrame(req));
-
-            recorder.start();
-            await audioCtx.resume();
-            await audioEl.play();
-
-            // Render each scene; transitions are overlapped (do not extend overall duration)
-            for (let i = 0; i < dialogueData.length; i++) {
-                const line = dialogueData[i];
-                const nextLine = dialogueData[i + 1];
-                const image = line.image;
-
-                const isLast = !nextLine;
-                const sceneDuration = Math.max(0.1, line.audioDuration - (isLast ? 0 : TRANSITION_DURATION_S));
-                const sceneEndTime = performance.now() + sceneDuration * 1000;
-
-                // Ken Burns parameters
-                const zoomStart = 1.0;
-                const zoomEnd = 1.1 + Math.random() * 0.1;
-                const panXStart = 0.5, panYStart = 0.5;
-                const panXEnd = 0.5 + (Math.random() - 0.5) * 0.1;
-                const panYEnd = 0.5 + (Math.random() - 0.5) * 0.1;
-
-                while (performance.now() < sceneEndTime) {
-                    const now = performance.now();
-                    const total = sceneDuration * 1000;
-                    const progress = Math.min(1, 1 - ((sceneEndTime - now) / total));
-
-                    const currentZoom = zoomStart + (zoomEnd - zoomStart) * progress;
-                    const currentPanX = panXStart + (panXEnd - panXStart) * progress;
-                    const currentPanY = panYStart + (panYEnd - panYStart) * progress;
-
-                    const sw = image.width / currentZoom;
-                    const sh = image.height / currentZoom;
-                    const sx = (image.width - sw) * currentPanX;
-                    const sy = (image.height - sh) * currentPanY;
-
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.globalAlpha = 1.0;
-                    ctx.drawImage(image, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-
-                    await nextFrame();
-                }
-
-                if (nextLine) {
-                    const transEnd = performance.now() + TRANSITION_DURATION_S * 1000;
-                    while (performance.now() < transEnd) {
-                        const now = performance.now();
-                        const total = TRANSITION_DURATION_S * 1000;
-                        const t = 1 - ((transEnd - now) / total); // 0..1
-
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.globalAlpha = 1.0 - t;
-                        ctx.drawImage(line.image, 0, 0, canvas.width, canvas.height);
-
-                        ctx.globalAlpha = t;
-                        ctx.drawImage(nextLine.image, 0, 0, canvas.width, canvas.height);
-
-                        await nextFrame();
-                    }
-                    ctx.globalAlpha = 1.0;
-                }
-            }
-
-            // Stop when audio completes for perfect A/V alignment
-            await new Promise(resolve => { audioEl.onended = resolve; });
-            recorder.stop();
-
-            const recordedBlob = await new Promise(resolve => {
-                recorder.onstop = () => resolve(new Blob(chunks, { type: mime }));
-            });
-
-            return recordedBlob; // WEBM with audio
+        if (!generatedAudioBlob) {
+            throw new Error('No generated audio found. Please generate audio first.');
         }
 
+        // Build audio element + web audio graph
+        const audioEl = new Audio(URL.createObjectURL(generatedAudioBlob));
+        audioEl.preload = 'auto';
+
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioCtx();
+        const sourceNode = audioCtx.createMediaElementSource(audioEl);
+        const destNode = audioCtx.createMediaStreamDestination();
+        sourceNode.connect(destNode);
+        sourceNode.connect(audioCtx.destination);
+
+        // Combine audio + video into one stream
+        const combined = new MediaStream([
+            ...videoStream.getVideoTracks(),
+            ...destNode.stream.getAudioTracks()
+        ]);
+
+        const mime = 'video/webm;codecs=vp9,opus';
+        const recorder = new MediaRecorder(combined, { mimeType: mime });
+        const chunks = [];
+        recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
+        // --- Precompute timing for each slide based on audio durations with overlapped transitions
+        const n = dialogueData.length;
+        const durations = dialogueData.map((d) => Math.max(0.1, d.audioDuration));
+
+        const startTimes = new Array(n).fill(0);
+        const endTimes = new Array(n).fill(0);
+        for (let i = 0; i < n; i++) {
+            if (i === 0) startTimes[i] = 0;
+            else startTimes[i] = endTimes[i - 1] - TRANSITION_DURATION_S; // overlap
+            endTimes[i] = startTimes[i] + durations[i];
+        }
+        const totalPlanned = endTimes[n - 1]; // nominal end time (unused, but kept)
+
+        // ✅ Precompute per-slide Ken Burns targets ONCE to prevent flicker
+        const kbParams = dialogueData.map(() => ({
+            zoomEnd: 1.1 + Math.random() * 0.1,
+            panXEnd: 0.5 + (Math.random() - 0.5) * 0.1,
+            panYEnd: 0.5 + (Math.random() - 0.5) * 0.1
+        }));
+
+        // Ensure all images are ready
+        for (let i = 0; i < n; i++) {
+            if (!dialogueData[i].image) throw new Error('Missing image for a dialogue line.');
+            if (!dialogueData[i].image.complete) {
+            await new Promise((res, rej) => {
+                dialogueData[i].image.onload = res;
+                dialogueData[i].image.onerror = () => rej(new Error('Image failed to load'));
+            });
+            }
+        }
+
+        // Start recording and audio playback after user gesture
+        recorder.start();
+        await audioCtx.resume();
+        await audioEl.play();
+
+        // Render loop driven by audio currentTime
+        let rafId = null;
+        function renderFrame() {
+            const t = audioEl.currentTime || 0;
+
+            // Find current slide index
+            let i = 0;
+            while (i < n - 1 && t >= endTimes[i]) i++;
+
+            const slideStart = startTimes[i];
+            const slideEnd = endTimes[i];
+            const slideDur = Math.max(0.001, slideEnd - slideStart);
+            const baseImg = dialogueData[i].image;
+
+            // Ken Burns progress within this slide
+            const kbProgress = Math.min(1, Math.max(0, (t - slideStart) / slideDur));
+
+            // Use cached per-slide targets (no per-frame randomness)
+            const zoomStart = 1.0;
+            const panXStart = 0.5, panYStart = 0.5;
+            const { zoomEnd, panXEnd, panYEnd } = kbParams[i];
+
+            const currentZoom = zoomStart + (zoomEnd - zoomStart) * kbProgress;
+            const currentPanX = panXStart + (panXEnd - panXStart) * kbProgress;
+            const currentPanY = panYStart + (panYEnd - panYStart) * kbProgress;
+
+            const sw = baseImg.width / currentZoom;
+            const sh = baseImg.height / currentZoom;
+            const sx = (baseImg.width - sw) * currentPanX;
+            const sy = (baseImg.height - sh) * currentPanY;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // If we are in the overlap region with next slide, crossfade
+            const inTransition = (i < n - 1) && (t >= (slideEnd - TRANSITION_DURATION_S));
+            if (inTransition) {
+            const nextImg = dialogueData[i + 1].image;
+            const mix = Math.min(1, Math.max(0, (t - (slideEnd - TRANSITION_DURATION_S)) / TRANSITION_DURATION_S));
+
+            // draw base (fade out)
+            ctx.globalAlpha = 1.0 - mix;
+            ctx.drawImage(baseImg, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+
+            // draw next (fade in)
+            ctx.globalAlpha = mix;
+            ctx.drawImage(nextImg, 0, 0, canvas.width, canvas.height);
+            ctx.globalAlpha = 1.0;
+            } else {
+            // normal frame
+            ctx.globalAlpha = 1.0;
+            ctx.drawImage(baseImg, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+            }
+
+            // keep going until audio stops
+            if (!audioEl.ended) {
+            rafId = requestAnimationFrame(renderFrame);
+            }
+        }
+
+        rafId = requestAnimationFrame(renderFrame);
+
+        // Finish when audio ends
+        await new Promise(resolve => { audioEl.onended = resolve; });
+
+        if (rafId) cancelAnimationFrame(rafId);
+        recorder.stop();
+
+        const recordedBlob = await new Promise(resolve => {
+            recorder.onstop = () => resolve(new Blob(chunks, { type: mime }));
+        });
+
+        return recordedBlob; // WEBM (video+audio)
+        }
+  
         // --- UPDATED: Simple download (WEBM already has audio track) ---
         async function downloadAndConvertVideo() {
             if (!generatedVideoBlob) {
