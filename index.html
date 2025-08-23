@@ -205,6 +205,22 @@
                     </button>
                 </div>
             </div>
+            
+            <!-- Video Generation Section -->
+            <div class="pt-6 border-t mt-6">
+                 <h2 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Video Generation</h2>
+                 <div id="video_status_area" class="text-center text-md text-gray-700 font-medium h-10 flex items-center justify-center"></div>
+                 <button id="generate_video_btn" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
+                    Generate Video
+                 </button>
+                <div id="video_output_area" class="hidden w-full text-center p-4 mt-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <video id="generated_video" class="w-full rounded-lg shadow-md" controls></video>
+                    <button id="download_video_btn" class="hidden mt-4 inline-block w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-md font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50" disabled>
+                        Download Video (MP4)
+                    </button>
+                </div>
+            </div>
+
 
             <!-- Script Display Area -->
             <div id="script_display_area" class="hidden w-full p-4 mt-6 bg-gray-50 border border-gray-200 rounded-lg">
@@ -214,9 +230,16 @@
         </div>
     </div>
 
+    <!-- REMOVED: FFmpeg script tag to avoid dependency -->
+    <!-- <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js"></script> -->
+
     <script>
         // --- State ---
         let uploadedFiles = [];
+        let dialogueData = []; // To store script, audio, and image data
+        let generatedVideoBlob = null;
+        let generatedAudioBlob = null;
+        // let ffmpeg; // REMOVED usage; no longer needed
 
         // --- Configuration ---
         const LOCATION = "us-central1";
@@ -396,12 +419,20 @@
             imageOutputArea: document.getElementById('image_output_area'),
             imageLoader: document.getElementById('image_loader'),
             generatedImage: document.getElementById('generated_image'),
+            // Video
+            generateVideoBtn: document.getElementById('generate_video_btn'),
+            videoStatusArea: document.getElementById('video_status_area'),
+            videoOutputArea: document.getElementById('video_output_area'),
+            generatedVideo: document.getElementById('generated_video'),
+            downloadVideoBtn: document.getElementById('download_video_btn'),
         };
         
         // --- Event Listeners ---
         ui.generateBtn.addEventListener('click', handleAudioGeneration);
-        ui.generateImageBtn.addEventListener('click', handleImageGeneration);
-        ui.regenerateImageBtn.addEventListener('click', handleImageGeneration);
+        ui.generateImageBtn.addEventListener('click', () => handleImageGeneration(false));
+        ui.regenerateImageBtn.addEventListener('click', () => handleImageGeneration(false));
+        ui.generateVideoBtn.addEventListener('click', handleVideoGeneration);
+        ui.downloadVideoBtn.addEventListener('click', downloadAndConvertVideo);
         ui.useDefaultsBtn.addEventListener('click', fillDefaultCredentials);
         ui.speakingRateSlider.addEventListener('input', () => ui.speakingRateValue.textContent = parseFloat(ui.speakingRateSlider.value).toFixed(1));
         ui.scriptLengthSlider.addEventListener('input', () => {
@@ -419,9 +450,9 @@
 
         // --- Functions ---
         function fillDefaultCredentials() {
-            ui.projectIdInput.value = 'qwiklabs-gcp-04-3b7afe1dd043';
-            ui.ttsApiKeyInput.value = 'AIzaSyBptW0k1XZjQ8bA2_tMWFjLqNfxBWbZN28';
-            ui.tokenInput.value = 'ya29.A0AS3H6NwaqTk9Im7hIyhMM0TRoD2RWoifwr-ERMcdwnaW2QrNhNU2t0aoq24i_XUQ3QwTtPa6jb0mKIWxerI4kk-6Kg6Rhe_e_t2F_wHePJMDYC3i0yLpj6a5twbkKNZEJhrJBKVgkVyvkDq1-nfG_9ofibM8m2ZMLs0fuPrn0F-tFP6f7hjSYfWwdtjkZ4LHCQOQaJubCUg3GOoq-EdbbQw5tGLAK2LO5Vu3DUDWVIlJ6Qf8LWx-_zgmtHeY2Zv8xcvXjXCAbGgUXhnSgX9QkzuOw5dHQTbsjMPk3K6Z8hEVdOlZX-ATmPmU1NWzRCxJ-aj5PMvsmKkhqJqEku5cW8TIWchY09MxPjqb7gaCgYKAZYSARUSFQHGX2MiZ0sLcgngH0qVhmvotrUWGA0365';
+            ui.projectIdInput.value = 'PROJECT_ID';
+            ui.ttsApiKeyInput.value = 'TTS_API_KEY';
+            ui.tokenInput.value = 'TOKEN';
         }
         
         function populateLanguages() {
@@ -504,7 +535,7 @@ ${fileContext}
     - Maintain a PG-rated conversation.
     - The script should have a total of approximately ${scriptLength} lines of dialogue.
 3.  **Formatting Rules (VERY IMPORTANT):**
-    - Each line must start with "Woman:" or "Man:". Do not include anything else.
+    - Each line must start with "Woman:" or "Man:".
     - Each line of dialogue should be a complete and descriptive sentence.
     - Your response must ONLY be the script itself, with no extra text, explanations, or formatting.
 
@@ -519,20 +550,12 @@ Begin the script now.`;
         function handleFileSelect(event) {
             const files = event.target.files;
             if (!files) return;
-
-            // Reset the array
             uploadedFiles = []; 
-            
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    // The result includes the full data URL prefix, which we need to remove for the API
                     const base64Data = e.target.result.split(',')[1];
-                    uploadedFiles.push({
-                        name: file.name,
-                        type: file.type,
-                        data: base64Data
-                    });
+                    uploadedFiles.push({ name: file.name, type: file.type, data: base64Data });
                     updateFilePreview();
                     updateFullPrompt();
                 };
@@ -557,26 +580,19 @@ Begin the script now.`;
 
         function clearFiles() {
             uploadedFiles = [];
-            ui.fileInput.value = null; // Resets the file input
+            ui.fileInput.value = null;
             updateFilePreview();
             updateFullPrompt();
         }
 
         async function handleScriptGeneration(prompt, token, projectId, modelId, files) {
              const url = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${LOCATION}/publishers/google/models/${modelId}:generateContent`;
-             
              const parts = [{ text: prompt }];
              if (files && files.length > 0) {
                  files.forEach(file => {
-                     parts.push({
-                         inlineData: {
-                             mimeType: file.type,
-                             data: file.data
-                         }
-                     });
+                     parts.push({ inlineData: { mimeType: file.type, data: file.data } });
                  });
              }
-
              const payload = { contents: [{ role: "user", parts: parts }] };
              const response = await fetch(url, {
                  method: 'POST',
@@ -589,7 +605,7 @@ Begin the script now.`;
              }
              const result = await response.json();
              if (!result.candidates || result.candidates.length === 0) {
-                 throw new Error("AI Script Generation returned no content. The model may be unavailable or the token may be expired.");
+                 throw new Error("AI Script Generation returned no content.");
              }
              return result.candidates[0].content.parts[0].text.trim();
         }
@@ -617,7 +633,8 @@ Begin the script now.`;
                 const script = await handleScriptGeneration(fullPrompt, token, projectId, modelId, uploadedFiles);
                 ui.scriptText.textContent = script;
                 ui.scriptDisplayArea.classList.remove('hidden');
-                const dialogueLines = script.split('\n').filter(line => {
+                
+                dialogueData = script.split('\n').filter(line => {
                     const l = line.trim().toLowerCase();
                     return l.startsWith('man:') || l.startsWith('woman:') || l.startsWith('hombre:') || l.startsWith('mujer:') || l.startsWith('homme:') || l.startsWith('femme:') || l.startsWith('mann:') || l.startsWith('frau:');
                 }).map(line => {
@@ -625,18 +642,23 @@ Begin the script now.`;
                     const speakerLower = speaker.trim().toLowerCase();
                     const speakerKey = (speakerLower.startsWith('man') || speakerLower.startsWith('hombre') || speakerLower.startsWith('homme') || speakerLower.startsWith('mann')) ? 'man' : 'woman';
                     const sanitizedText = text.join(':').trim().replace(/[`*]/g, '');
-                    return { speaker: speakerKey, text: sanitizedText, audioBlob: null };
+                    return { speaker: speakerKey, text: sanitizedText, audioBlob: null, imageBase64: null, audioDuration: 0 };
                 });
-                if (dialogueLines.length === 0) throw new Error("AI failed to generate a valid script. Check the format.");
+
+                if (dialogueData.length === 0) throw new Error("AI failed to generate a valid script.");
+                
                 ui.statusArea.textContent = 'Generating audio for each line...';
-                for (let i = 0; i < dialogueLines.length; i++) {
-                     const line = dialogueLines[i];
-                     ui.statusArea.textContent = `Generating audio ${i + 1}/${dialogueLines.length}...`;
-                     line.audioBlob = await generateAudioBlob(line.text, ttsApiKey, line.speaker);
+                for (let i = 0; i < dialogueData.length; i++) {
+                     const line = dialogueData[i];
+                     ui.statusArea.textContent = `Generating audio ${i + 1}/${dialogueData.length}...`;
+                     const audioResult = await generateAudioBlob(line.text, ttsApiKey, line.speaker);
+                     line.audioBlob = audioResult.blob;
+                     line.audioDuration = audioResult.duration;
                 }
+
                 ui.statusArea.textContent = 'Combining audio files...';
-                const finalAudioBlob = await concatenateAudio(dialogueLines);
-                const audioUrl = URL.createObjectURL(finalAudioBlob);
+                generatedAudioBlob = await concatenateAudio(dialogueData.map(d => d.audioBlob));
+                const audioUrl = URL.createObjectURL(generatedAudioBlob);
                 ui.audioPlayer.src = audioUrl;
                 ui.audioPlayer.classList.remove('hidden');
                 ui.downloadAudioLink.href = audioUrl;
@@ -654,8 +676,8 @@ Begin the script now.`;
             }
         }
 
-        async function handleImageGeneration() {
-            const topic = ui.scriptPromptInput.value.trim();
+        async function handleImageGeneration(isForVideo = false, promptOverride = null) {
+            const topic = promptOverride || ui.scriptPromptInput.value.trim();
             const style = ui.imageStyleInput.value.trim();
             const token = ui.tokenInput.value.trim();
             const projectId = ui.projectIdInput.value.trim();
@@ -663,34 +685,29 @@ Begin the script now.`;
             const aspectRatio = ui.aspectRatioSelect.value;
 
             if (!topic || !token || !projectId) {
-                alert("Please fill out the Project ID, Access Token, and Topic fields.");
-                return;
+                if (!isForVideo) alert("Please fill out the Project ID, Access Token, and Topic fields.");
+                throw new Error("Missing credentials or topic for image generation.");
             }
             
             const imagePrompt = `${topic}, ${style}`;
 
-            ui.imageOutputArea.classList.remove('hidden');
-            ui.imageLoader.classList.remove('hidden');
-            ui.generatedImage.classList.add('hidden');
-            ui.regenerateImageBtn.classList.add('hidden');
-            ui.generateImageBtn.disabled = true;
+            if (!isForVideo) {
+                ui.imageOutputArea.classList.remove('hidden');
+                ui.imageLoader.classList.remove('hidden');
+                ui.generatedImage.classList.add('hidden');
+                ui.regenerateImageBtn.classList.add('hidden');
+                ui.generateImageBtn.disabled = true;
+            }
 
             try {
                 const url = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${LOCATION}/publishers/google/models/${modelId}:predict`;
                 const payload = {
                     instances: [{ prompt: imagePrompt }],
-                    parameters: { 
-                        sampleCount: 1,
-                        aspectRatio: aspectRatio
-                    }
+                    parameters: { sampleCount: 1, aspectRatio: aspectRatio }
                 };
-
                 const response = await fetch(url, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
                 if (!response.ok) {
@@ -702,27 +719,227 @@ Begin the script now.`;
                     throw new Error("Imagen API did not return image content.");
                 }
                 const base64Data = result.predictions[0].bytesBase64Encoded;
-                ui.generatedImage.src = `data:image/png;base64,${base64Data}`;
-                ui.generatedImage.classList.remove('hidden');
-                ui.regenerateImageBtn.classList.remove('hidden');
-
+                
+                if (isForVideo) {
+                    return base64Data;
+                } else {
+                    ui.generatedImage.src = `data:image/png;base64,${base64Data}`;
+                    ui.generatedImage.classList.remove('hidden');
+                    ui.regenerateImageBtn.classList.remove('hidden');
+                }
             } catch (error) {
                 console.error("Image generation failed:", error);
-                alert(`Image Generation Error: ${error.message}`);
-                ui.imageOutputArea.classList.add('hidden');
+                if (!isForVideo) {
+                    alert(`Image Generation Error: ${error.message}`);
+                    ui.imageOutputArea.classList.add('hidden');
+                }
+                throw error;
             } finally {
-                ui.imageLoader.classList.add('hidden');
-                ui.generateImageBtn.disabled = false;
+                if (!isForVideo) {
+                    ui.imageLoader.classList.add('hidden');
+                    ui.generateImageBtn.disabled = false;
+                }
             }
+        }
+
+        async function handleVideoGeneration() {
+            if (dialogueData.length === 0) {
+                alert("Please generate audio first. The video requires the generated script and audio timings.");
+                return;
+            }
+
+            ui.generateVideoBtn.disabled = true;
+            ui.generateVideoBtn.textContent = 'Generating Video...';
+            ui.videoStatusArea.textContent = 'Starting video generation...';
+            ui.videoOutputArea.classList.add('hidden');
+            ui.downloadVideoBtn.classList.add('hidden');
+            ui.downloadVideoBtn.disabled = true;
+
+            try {
+                // 1. Generate an image for each dialogue line
+                for (let i = 0; i < dialogueData.length; i++) {
+                    ui.videoStatusArea.textContent = `Generating image ${i + 1}/${dialogueData.length}...`;
+                    const imagePrompt = `An illustration for a podcast dialogue line: "${dialogueData[i].text}"`;
+                    const base64 = await handleImageGeneration(true, imagePrompt);
+                    dialogueData[i].image = new Image();
+                    await new Promise((resolve, reject) => {
+                        dialogueData[i].image.onload = resolve;
+                        dialogueData[i].image.onerror = reject;
+                        dialogueData[i].image.src = `data:image/png;base64,${base64}`;
+                    });
+                }
+
+                // 2. Create animated video from images (WITH audio recorded in-browser) // UPDATED
+                ui.videoStatusArea.textContent = 'Assembling HD video with animations...';
+                generatedVideoBlob = await createAnimatedVideo(); // UPDATED
+                const videoUrl = URL.createObjectURL(generatedVideoBlob);
+                ui.generatedVideo.src = videoUrl;
+                ui.videoOutputArea.classList.remove('hidden');
+                ui.downloadVideoBtn.classList.remove('hidden');
+                ui.downloadVideoBtn.disabled = false;
+                ui.videoStatusArea.textContent = 'Video preview ready with audio! Click download.'; // UPDATED
+                ui.downloadVideoBtn.textContent = 'Download Video (WEBM)'; // UPDATED
+
+            } catch (error) {
+                console.error("Video Generation failed:", error);
+                ui.videoStatusArea.textContent = `Error: ${error.message}`;
+            } finally {
+                ui.generateVideoBtn.disabled = false;
+                ui.generateVideoBtn.textContent = 'Generate Video';
+            }
+        }
+
+        // --- UPDATED: Record canvas + generated audio together (no FFmpeg needed) ---
+        async function createAnimatedVideo() {
+            const TRANSITION_DURATION_S = 0.7; // crossfade overlapped inside each line
+            const FRAMERATE = 30;
+
+            const aspectRatio = ui.aspectRatioSelect.value;
+            const HD_WIDTH = 1920;
+            const HD_HEIGHT = 1080;
+            const canvas = document.createElement('canvas');
+            canvas.width = aspectRatio === '16:9' ? HD_WIDTH : HD_HEIGHT;
+            canvas.height = aspectRatio === '16:9' ? HD_HEIGHT : HD_WIDTH;
+            const ctx = canvas.getContext('2d');
+
+            // Build video stream from canvas
+            const videoStream = canvas.captureStream(FRAMERATE);
+
+            if (!generatedAudioBlob) {
+                throw new Error('No generated audio found. Please generate audio first.');
+            }
+
+            // Build audio stream from combined MP3 using Web Audio graph
+            const audioEl = new Audio(URL.createObjectURL(generatedAudioBlob));
+            audioEl.preload = 'auto';
+
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            const audioCtx = new AudioCtx();
+            const sourceNode = audioCtx.createMediaElementSource(audioEl);
+            const destNode = audioCtx.createMediaStreamDestination();
+
+            // Send to both speakers and recorder
+            sourceNode.connect(destNode);
+            sourceNode.connect(audioCtx.destination);
+
+            // Combine into one MediaStream
+            const combined = new MediaStream([
+                ...videoStream.getVideoTracks(),
+                ...destNode.stream.getAudioTracks()
+            ]);
+
+            const mime = 'video/webm;codecs=vp9,opus';
+            const recorder = new MediaRecorder(combined, { mimeType: mime });
+            const chunks = [];
+            recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
+            const nextFrame = () => new Promise(req => requestAnimationFrame(req));
+
+            recorder.start();
+            await audioCtx.resume();
+            await audioEl.play();
+
+            // Render each scene; transitions are overlapped (do not extend overall duration)
+            for (let i = 0; i < dialogueData.length; i++) {
+                const line = dialogueData[i];
+                const nextLine = dialogueData[i + 1];
+                const image = line.image;
+
+                const isLast = !nextLine;
+                const sceneDuration = Math.max(0.1, line.audioDuration - (isLast ? 0 : TRANSITION_DURATION_S));
+                const sceneEndTime = performance.now() + sceneDuration * 1000;
+
+                // Ken Burns parameters
+                const zoomStart = 1.0;
+                const zoomEnd = 1.1 + Math.random() * 0.1;
+                const panXStart = 0.5, panYStart = 0.5;
+                const panXEnd = 0.5 + (Math.random() - 0.5) * 0.1;
+                const panYEnd = 0.5 + (Math.random() - 0.5) * 0.1;
+
+                while (performance.now() < sceneEndTime) {
+                    const now = performance.now();
+                    const total = sceneDuration * 1000;
+                    const progress = Math.min(1, 1 - ((sceneEndTime - now) / total));
+
+                    const currentZoom = zoomStart + (zoomEnd - zoomStart) * progress;
+                    const currentPanX = panXStart + (panXEnd - panXStart) * progress;
+                    const currentPanY = panYStart + (panYEnd - panYStart) * progress;
+
+                    const sw = image.width / currentZoom;
+                    const sh = image.height / currentZoom;
+                    const sx = (image.width - sw) * currentPanX;
+                    const sy = (image.height - sh) * currentPanY;
+
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.globalAlpha = 1.0;
+                    ctx.drawImage(image, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+
+                    await nextFrame();
+                }
+
+                if (nextLine) {
+                    const transEnd = performance.now() + TRANSITION_DURATION_S * 1000;
+                    while (performance.now() < transEnd) {
+                        const now = performance.now();
+                        const total = TRANSITION_DURATION_S * 1000;
+                        const t = 1 - ((transEnd - now) / total); // 0..1
+
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.globalAlpha = 1.0 - t;
+                        ctx.drawImage(line.image, 0, 0, canvas.width, canvas.height);
+
+                        ctx.globalAlpha = t;
+                        ctx.drawImage(nextLine.image, 0, 0, canvas.width, canvas.height);
+
+                        await nextFrame();
+                    }
+                    ctx.globalAlpha = 1.0;
+                }
+            }
+
+            // Stop when audio completes for perfect A/V alignment
+            await new Promise(resolve => { audioEl.onended = resolve; });
+            recorder.stop();
+
+            const recordedBlob = await new Promise(resolve => {
+                recorder.onstop = () => resolve(new Blob(chunks, { type: mime }));
+            });
+
+            return recordedBlob; // WEBM with audio
+        }
+
+        // --- UPDATED: Simple download (WEBM already has audio track) ---
+        async function downloadAndConvertVideo() {
+            if (!generatedVideoBlob) {
+                alert("No video data available to download.");
+                return;
+            }
+
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(generatedVideoBlob);
+            a.download = 'ai_dialogue_video.webm';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+
+            ui.videoStatusArea.textContent = 'WEBM downloaded (video + audio).';
         }
 
         async function generateAudioBlob(text, ttsApiKey, speaker) {
             const voiceSelect = speaker === 'man' ? ui.manVoiceSelect : ui.womanVoiceSelect;
-            if (voiceSelect.disabled) throw new Error(`Cannot generate audio: No ${speaker} voices available for the selected language.`);
+            if (voiceSelect.disabled) throw new Error(`Cannot generate audio: No ${speaker} voices available.`);
             const voiceConfig = JSON.parse(voiceSelect.value);
             const speakingRate = parseFloat(ui.speakingRateSlider.value);
             const base64 = await fetchTTS(text, ttsApiKey, voiceConfig, speakingRate);
-            return await (await fetch(`data:audio/mp3;base64,${base64}`)).blob();
+            const blob = await (await fetch(`data:audio/mp3;base64,${base64}`)).blob();
+            
+            const duration = await new Promise((resolve) => {
+                const audio = new Audio(URL.createObjectURL(blob));
+                audio.onloadedmetadata = () => resolve(audio.duration);
+            });
+
+            return { blob, duration };
         }
 
         async function fetchTTS(text, ttsApiKey, voiceConfig, speakingRate) {
@@ -759,8 +976,7 @@ Begin the script now.`;
             URL.revokeObjectURL(url);
         }
 
-        async function concatenateAudio(dialogueLines) {
-            const audioBlobs = dialogueLines.map(line => line.audioBlob);
+        async function concatenateAudio(audioBlobs) {
             return new Blob(audioBlobs, { type: 'audio/mp3' });
         }
         
