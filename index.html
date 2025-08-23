@@ -38,16 +38,6 @@
             margin-left: 10px;
             margin-right: 10px;
         }
-        .file-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.5rem;
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen py-8">
@@ -112,13 +102,6 @@
                  <div>
                     <label for="script_prompt_input" class="block text-sm font-medium text-gray-700">Script & Image Topic</label>
                     <textarea id="script_prompt_input" rows="2" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., A friendly argument about whether pineapple belongs on pizza."></textarea>
-                </div>
-                <!-- File Upload Section -->
-                <div>
-                    <label for="file_input" class="block text-sm font-medium text-gray-700">Attach Files (Optional)</label>
-                    <input type="file" id="file_input" multiple class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
-                    <div id="file_preview_area" class="mt-2 space-y-2"></div>
-                    <button id="clear_files_btn" class="hidden mt-2 px-3 py-1 text-xs font-medium text-white bg-red-500 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400">Clear Files</button>
                 </div>
                 <div>
                     <label for="full_prompt_input" class="block text-sm font-medium text-gray-700">Full AI Prompt (Editable)</label>
@@ -215,9 +198,6 @@
     </div>
 
     <script>
-        // --- State ---
-        let uploadedFiles = [];
-
         // --- Configuration ---
         const LOCATION = "us-central1";
 
@@ -383,10 +363,6 @@
             scriptDisplayArea: document.getElementById('script_display_area'),
             scriptText: document.getElementById('script_text'),
             audioPlayer: document.getElementById('audio_player'),
-            // File Upload
-            fileInput: document.getElementById('file_input'),
-            filePreviewArea: document.getElementById('file_preview_area'),
-            clearFilesBtn: document.getElementById('clear_files_btn'),
             // Image
             generateImageBtn: document.getElementById('generate_image_btn'),
             regenerateImageBtn: document.getElementById('regenerate_image_btn'),
@@ -414,8 +390,6 @@
         });
         ui.scriptPromptInput.addEventListener('input', updateFullPrompt);
         ui.downloadScriptBtn.addEventListener('click', downloadScript);
-        ui.fileInput.addEventListener('change', handleFileSelect);
-        ui.clearFilesBtn.addEventListener('click', clearFiles);
 
         // --- Functions ---
         function fillDefaultCredentials() {
@@ -480,23 +454,14 @@
             const selectedLanguageOption = ui.languageSelect.options[ui.languageSelect.selectedIndex];
             const languageName = selectedLanguageOption ? selectedLanguageOption.textContent.split('(')[0].trim() : "English";
 
-            let fileContext = "";
-            if (uploadedFiles.length > 0) {
-                const fileNames = uploadedFiles.map(f => `- ${f.name}`).join('\n');
-                fileContext = `
-# Context from Attached Files:
-You MUST use the content of the following attached file(s) as the primary source of information and context for the dialogue.
-${fileNames}
-`;
-            }
+            // Updated prompt with instructions for longer lines and a more flexible line count.
+            const fullPrompt = `You are a world-class podcast producer. Your task is to create an engaging podcast script between a host (Woman) and a guest expert (Man) based on the provided topic.
 
-            const fullPrompt = `You are a world-class podcast producer. Your task is to create an engaging podcast script between a host (Woman) and a guest expert (Man) based on the provided topic ${uploadedFiles.length > 0 ? 'and attached files' : ''}.
-${fileContext}
 # Topic:
 "${topic}"
 
 # Instructions:
-1.  **Analyze the Topic ${uploadedFiles.length > 0 ? 'and File Content' : ''}:** Identify key points and interesting facts that could drive an engaging conversation.
+1.  **Analyze the Topic:** Identify key points and interesting facts that could drive an engaging conversation.
 2.  **Craft the Dialogue:**
     - The host (Woman) always initiates and concludes the conversation.
     - Develop a natural, conversational flow.
@@ -516,68 +481,10 @@ Begin the script now.`;
             ui.fullPromptInput.value = fullPrompt;
         }
 
-        function handleFileSelect(event) {
-            const files = event.target.files;
-            if (!files) return;
 
-            // Reset the array
-            uploadedFiles = []; 
-            
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    // The result includes the full data URL prefix, which we need to remove for the API
-                    const base64Data = e.target.result.split(',')[1];
-                    uploadedFiles.push({
-                        name: file.name,
-                        type: file.type,
-                        data: base64Data
-                    });
-                    updateFilePreview();
-                    updateFullPrompt();
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        function updateFilePreview() {
-            ui.filePreviewArea.innerHTML = '';
-            if (uploadedFiles.length > 0) {
-                uploadedFiles.forEach(file => {
-                    const fileElement = document.createElement('div');
-                    fileElement.className = 'file-item';
-                    fileElement.textContent = file.name;
-                    ui.filePreviewArea.appendChild(fileElement);
-                });
-                ui.clearFilesBtn.classList.remove('hidden');
-            } else {
-                ui.clearFilesBtn.classList.add('hidden');
-            }
-        }
-
-        function clearFiles() {
-            uploadedFiles = [];
-            ui.fileInput.value = null; // Resets the file input
-            updateFilePreview();
-            updateFullPrompt();
-        }
-
-        async function handleScriptGeneration(prompt, token, projectId, modelId, files) {
+        async function handleScriptGeneration(prompt, token, projectId, modelId) {
              const url = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${LOCATION}/publishers/google/models/${modelId}:generateContent`;
-             
-             const parts = [{ text: prompt }];
-             if (files && files.length > 0) {
-                 files.forEach(file => {
-                     parts.push({
-                         inlineData: {
-                             mimeType: file.type,
-                             data: file.data
-                         }
-                     });
-                 });
-             }
-
-             const payload = { contents: [{ role: "user", parts: parts }] };
+             const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
              const response = await fetch(url, {
                  method: 'POST',
                  headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -614,7 +521,7 @@ Begin the script now.`;
             ui.statusArea.textContent = 'Starting generation...';
             try {
                 ui.statusArea.textContent = 'Generating AI script...';
-                const script = await handleScriptGeneration(fullPrompt, token, projectId, modelId, uploadedFiles);
+                const script = await handleScriptGeneration(fullPrompt, token, projectId, modelId);
                 ui.scriptText.textContent = script;
                 ui.scriptDisplayArea.classList.remove('hidden');
                 const dialogueLines = script.split('\n').filter(line => {
