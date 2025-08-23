@@ -38,6 +38,16 @@
             margin-left: 10px;
             margin-right: 10px;
         }
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen py-8">
@@ -77,31 +87,38 @@
                  <h2 class="text-lg font-semibold text-gray-800 border-b pb-2">Audio Content</h2>
                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div>
-                        <label for="model_select" class="block text-sm font-medium text-gray-700">AI Model for Script</label>
-                        <select id="model_select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                            <optgroup label="Gemini 2.5">
-                                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                                <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
-                                <option value="gemini-2.5-flash-lite-preview-06-17">Gemini 2.5 Flash-Lite (Preview)</option>
-                            </optgroup>
-                            <optgroup label="Gemini 2.0">
-                                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                                <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite</option>
-                            </optgroup>
-                            <optgroup label="Gemini 1.5">
-                                <option value="gemini-1.5-pro-001">Gemini 1.5 Pro</option>
-                                <option value="gemini-1.5-flash-001">Gemini 1.5 Flash</option>
-                            </optgroup>
-                        </select>
-                    </div>
+                         <label for="model_select" class="block text-sm font-medium text-gray-700">AI Model for Script</label>
+                         <select id="model_select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                             <optgroup label="Gemini 2.5">
+                                 <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                                 <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
+                                 <option value="gemini-2.5-flash-lite-preview-06-17">Gemini 2.5 Flash-Lite (Preview)</option>
+                             </optgroup>
+                             <optgroup label="Gemini 2.0">
+                                 <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                                 <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite</option>
+                             </optgroup>
+                             <optgroup label="Gemini 1.5">
+                                 <option value="gemini-1.5-pro-001">Gemini 1.5 Pro</option>
+                                 <option value="gemini-1.5-flash-001">Gemini 1.5 Flash</option>
+                             </optgroup>
+                         </select>
+                     </div>
                      <div>
-                        <label for="script_length_slider" class="block text-sm font-medium text-gray-700">Max Script Lines: <span id="script_length_value">6</span></label>
-                        <input type="range" id="script_length_slider" min="2" max="20000" value="6" class="mt-1 w-full h-10 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                    </div>
+                         <label for="script_length_slider" class="block text-sm font-medium text-gray-700">Approx. Script Lines: <span id="script_length_value">6</span></label>
+                         <input type="range" id="script_length_slider" min="2" max="20" value="6" class="mt-1 w-full h-10 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                     </div>
                  </div>
                  <div>
                     <label for="script_prompt_input" class="block text-sm font-medium text-gray-700">Script & Image Topic</label>
                     <textarea id="script_prompt_input" rows="2" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., A friendly argument about whether pineapple belongs on pizza."></textarea>
+                </div>
+                <!-- File Upload Section -->
+                <div>
+                    <label for="file_input" class="block text-sm font-medium text-gray-700">Attach Files (Optional)</label>
+                    <input type="file" id="file_input" multiple class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                    <div id="file_preview_area" class="mt-2 space-y-2"></div>
+                    <button id="clear_files_btn" class="hidden mt-2 px-3 py-1 text-xs font-medium text-white bg-red-500 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400">Clear Files</button>
                 </div>
                 <div>
                     <label for="full_prompt_input" class="block text-sm font-medium text-gray-700">Full AI Prompt (Editable)</label>
@@ -145,23 +162,23 @@
              <div class="space-y-4 pt-4 border-t">
                 <h2 class="text-lg font-semibold text-gray-800 border-b pb-2">Audio Customization</h2>
                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="speaking_rate_slider" class="block text-sm font-medium text-gray-700">Speaking Speed: <span id="speaking_rate_value">1.0</span>x</label>
-                        <input type="range" id="speaking_rate_slider" min="0.5" max="1.5" value="1.0" step="0.1" class="mt-1 w-full h-10 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                    </div>
                      <div>
-                        <label for="language_select" class="block text-sm font-medium text-gray-700">Voice Language</label>
-                        <select id="language_select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
+                         <label for="speaking_rate_slider" class="block text-sm font-medium text-gray-700">Speaking Speed: <span id="speaking_rate_value">1.0</span>x</label>
+                         <input type="range" id="speaking_rate_slider" min="0.5" max="1.5" value="1.0" step="0.1" class="mt-1 w-full h-10 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                     </div>
+                     <div>
+                         <label for="language_select" class="block text-sm font-medium text-gray-700">Voice Language</label>
+                         <select id="language_select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
                      </div>
                  </div>
                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div>
-                        <label for="man_voice_select" class="block text-sm font-medium text-gray-700">Man's Voice</label>
-                        <select id="man_voice_select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
+                         <label for="man_voice_select" class="block text-sm font-medium text-gray-700">Man's Voice</label>
+                         <select id="man_voice_select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
                      </div>
                      <div>
-                        <label for="woman_voice_select" class="block text-sm font-medium text-gray-700">Woman's Voice</label>
-                        <select id="woman_voice_select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
+                         <label for="woman_voice_select" class="block text-sm font-medium text-gray-700">Woman's Voice</label>
+                         <select id="woman_voice_select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
                      </div>
                  </div>
             </div>
@@ -198,6 +215,9 @@
     </div>
 
     <script>
+        // --- State ---
+        let uploadedFiles = [];
+
         // --- Configuration ---
         const LOCATION = "us-central1";
 
@@ -363,6 +383,10 @@
             scriptDisplayArea: document.getElementById('script_display_area'),
             scriptText: document.getElementById('script_text'),
             audioPlayer: document.getElementById('audio_player'),
+            // File Upload
+            fileInput: document.getElementById('file_input'),
+            filePreviewArea: document.getElementById('file_preview_area'),
+            clearFilesBtn: document.getElementById('clear_files_btn'),
             // Image
             generateImageBtn: document.getElementById('generate_image_btn'),
             regenerateImageBtn: document.getElementById('regenerate_image_btn'),
@@ -390,12 +414,14 @@
         });
         ui.scriptPromptInput.addEventListener('input', updateFullPrompt);
         ui.downloadScriptBtn.addEventListener('click', downloadScript);
+        ui.fileInput.addEventListener('change', handleFileSelect);
+        ui.clearFilesBtn.addEventListener('click', clearFiles);
 
         // --- Functions ---
         function fillDefaultCredentials() {
-            ui.projectIdInput.value = 'Get_Project_ID_From_GoogleCloud';
-            ui.ttsApiKeyInput.value = 'Get_API_Key_From_Google_Cloud';
-            ui.tokenInput.value = 'Get_Access_Token_from_Google_Cloud';
+            ui.projectIdInput.value = 'qwiklabs-gcp-04-3b7afe1dd043';
+            ui.ttsApiKeyInput.value = 'AIzaSyBptW0k1XZjQ8bA2_tMWFjLqNfxBWbZN28';
+            ui.tokenInput.value = 'ya29.A0AS3H6NwaqTk9Im7hIyhMM0TRoD2RWoifwr-ERMcdwnaW2QrNhNU2t0aoq24i_XUQ3QwTtPa6jb0mKIWxerI4kk-6Kg6Rhe_e_t2F_wHePJMDYC3i0yLpj6a5twbkKNZEJhrJBKVgkVyvkDq1-nfG_9ofibM8m2ZMLs0fuPrn0F-tFP6f7hjSYfWwdtjkZ4LHCQOQaJubCUg3GOoq-EdbbQw5tGLAK2LO5Vu3DUDWVIlJ6Qf8LWx-_zgmtHeY2Zv8xcvXjXCAbGgUXhnSgX9QkzuOw5dHQTbsjMPk3K6Z8hEVdOlZX-ATmPmU1NWzRCxJ-aj5PMvsmKkhqJqEku5cW8TIWchY09MxPjqb7gaCgYKAZYSARUSFQHGX2MiZ0sLcgngH0qVhmvotrUWGA0365';
         }
         
         function populateLanguages() {
@@ -454,15 +480,23 @@
             const selectedLanguageOption = ui.languageSelect.options[ui.languageSelect.selectedIndex];
             const languageName = selectedLanguageOption ? selectedLanguageOption.textContent.split('(')[0].trim() : "English";
 
-            // New, more detailed system prompt based on user request.
-            // It defines roles (Woman as host, Man as guest) and sets a podcast-like context.
-            const fullPrompt = `You are a world-class podcast producer. Your task is to create an engaging podcast script between a host (Woman) and a guest expert (Man) based on the provided topic.
+            let fileContext = "";
+            if (uploadedFiles.length > 0) {
+                const fileNames = uploadedFiles.map(f => `- ${f.name}`).join('\n');
+                fileContext = `
+# Context from Attached Files:
+You MUST use the content of the following attached file(s) as the primary source of information and context for the dialogue.
+${fileNames}
+`;
+            }
 
+            const fullPrompt = `You are a world-class podcast producer. Your task is to create an engaging podcast script between a host (Woman) and a guest expert (Man) based on the provided topic ${uploadedFiles.length > 0 ? 'and attached files' : ''}.
+${fileContext}
 # Topic:
 "${topic}"
 
 # Instructions:
-1.  **Analyze the Topic:** Identify key points and interesting facts that could drive an engaging conversation.
+1.  **Analyze the Topic ${uploadedFiles.length > 0 ? 'and File Content' : ''}:** Identify key points and interesting facts that could drive an engaging conversation.
 2.  **Craft the Dialogue:**
     - The host (Woman) always initiates and concludes the conversation.
     - Develop a natural, conversational flow.
@@ -482,10 +516,68 @@ Begin the script now.`;
             ui.fullPromptInput.value = fullPrompt;
         }
 
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            if (!files) return;
 
-        async function handleScriptGeneration(prompt, token, projectId, modelId) {
+            // Reset the array
+            uploadedFiles = []; 
+            
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    // The result includes the full data URL prefix, which we need to remove for the API
+                    const base64Data = e.target.result.split(',')[1];
+                    uploadedFiles.push({
+                        name: file.name,
+                        type: file.type,
+                        data: base64Data
+                    });
+                    updateFilePreview();
+                    updateFullPrompt();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function updateFilePreview() {
+            ui.filePreviewArea.innerHTML = '';
+            if (uploadedFiles.length > 0) {
+                uploadedFiles.forEach(file => {
+                    const fileElement = document.createElement('div');
+                    fileElement.className = 'file-item';
+                    fileElement.textContent = file.name;
+                    ui.filePreviewArea.appendChild(fileElement);
+                });
+                ui.clearFilesBtn.classList.remove('hidden');
+            } else {
+                ui.clearFilesBtn.classList.add('hidden');
+            }
+        }
+
+        function clearFiles() {
+            uploadedFiles = [];
+            ui.fileInput.value = null; // Resets the file input
+            updateFilePreview();
+            updateFullPrompt();
+        }
+
+        async function handleScriptGeneration(prompt, token, projectId, modelId, files) {
              const url = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${LOCATION}/publishers/google/models/${modelId}:generateContent`;
-             const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+             
+             const parts = [{ text: prompt }];
+             if (files && files.length > 0) {
+                 files.forEach(file => {
+                     parts.push({
+                         inlineData: {
+                             mimeType: file.type,
+                             data: file.data
+                         }
+                     });
+                 });
+             }
+
+             const payload = { contents: [{ role: "user", parts: parts }] };
              const response = await fetch(url, {
                  method: 'POST',
                  headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -522,7 +614,7 @@ Begin the script now.`;
             ui.statusArea.textContent = 'Starting generation...';
             try {
                 ui.statusArea.textContent = 'Generating AI script...';
-                const script = await handleScriptGeneration(fullPrompt, token, projectId, modelId);
+                const script = await handleScriptGeneration(fullPrompt, token, projectId, modelId, uploadedFiles);
                 ui.scriptText.textContent = script;
                 ui.scriptDisplayArea.classList.remove('hidden');
                 const dialogueLines = script.split('\n').filter(line => {
