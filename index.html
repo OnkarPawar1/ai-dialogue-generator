@@ -205,6 +205,22 @@
                     </button>
                 </div>
             </div>
+            
+            <!-- Video Generation Section -->
+            <div class="pt-6 border-t mt-6">
+                 <h2 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Video Generation</h2>
+                 <div id="video_status_area" class="text-center text-md text-gray-700 font-medium h-10 flex items-center justify-center"></div>
+                 <button id="generate_video_btn" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
+                    Generate Video
+                </button>
+                <div id="video_output_area" class="hidden w-full text-center p-4 mt-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <video id="generated_video" class="w-full rounded-lg shadow-md" controls></video>
+                    <a id="download_video_link" class="hidden mt-4 inline-block w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-md font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        Download Video (MP4)
+                    </a>
+                </div>
+            </div>
+
 
             <!-- Script Display Area -->
             <div id="script_display_area" class="hidden w-full p-4 mt-6 bg-gray-50 border border-gray-200 rounded-lg">
@@ -214,9 +230,11 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/ffmpeg.js@4.2.9003/ffmpeg-mp4.js"></script>
     <script>
         // --- State ---
         let uploadedFiles = [];
+        let dialogueData = []; // To store script, audio, and image data
 
         // --- Configuration ---
         const LOCATION = "us-central1";
@@ -396,11 +414,18 @@
             imageOutputArea: document.getElementById('image_output_area'),
             imageLoader: document.getElementById('image_loader'),
             generatedImage: document.getElementById('generated_image'),
+            // Video
+            generateVideoBtn: document.getElementById('generate_video_btn'),
+            videoStatusArea: document.getElementById('video_status_area'),
+            videoOutputArea: document.getElementById('video_output_area'),
+            generatedVideo: document.getElementById('generated_video'),
+            downloadVideoLink: document.getElementById('download_video_link'),
         };
         
         // --- Event Listeners ---
         ui.generateBtn.addEventListener('click', handleAudioGeneration);
         ui.generateImageBtn.addEventListener('click', handleImageGeneration);
+        ui.generateVideoBtn.addEventListener('click', handleVideoGeneration);
         ui.regenerateImageBtn.addEventListener('click', handleImageGeneration);
         ui.useDefaultsBtn.addEventListener('click', fillDefaultCredentials);
         ui.speakingRateSlider.addEventListener('input', () => ui.speakingRateValue.textContent = parseFloat(ui.speakingRateSlider.value).toFixed(1));
@@ -617,7 +642,8 @@ Begin the script now.`;
                 const script = await handleScriptGeneration(fullPrompt, token, projectId, modelId, uploadedFiles);
                 ui.scriptText.textContent = script;
                 ui.scriptDisplayArea.classList.remove('hidden');
-                const dialogueLines = script.split('\n').filter(line => {
+                
+                dialogueData = script.split('\n').filter(line => {
                     const l = line.trim().toLowerCase();
                     return l.startsWith('man:') || l.startsWith('woman:') || l.startsWith('hombre:') || l.startsWith('mujer:') || l.startsWith('homme:') || l.startsWith('femme:') || l.startsWith('mann:') || l.startsWith('frau:');
                 }).map(line => {
@@ -625,17 +651,22 @@ Begin the script now.`;
                     const speakerLower = speaker.trim().toLowerCase();
                     const speakerKey = (speakerLower.startsWith('man') || speakerLower.startsWith('hombre') || speakerLower.startsWith('homme') || speakerLower.startsWith('mann')) ? 'man' : 'woman';
                     const sanitizedText = text.join(':').trim().replace(/[`*]/g, '');
-                    return { speaker: speakerKey, text: sanitizedText, audioBlob: null };
+                    return { speaker: speakerKey, text: sanitizedText, audioBlob: null, imageBase64: null, audioDuration: 0 };
                 });
-                if (dialogueLines.length === 0) throw new Error("AI failed to generate a valid script. Check the format.");
+
+                if (dialogueData.length === 0) throw new Error("AI failed to generate a valid script. Check the format.");
+                
                 ui.statusArea.textContent = 'Generating audio for each line...';
-                for (let i = 0; i < dialogueLines.length; i++) {
-                     const line = dialogueLines[i];
-                     ui.statusArea.textContent = `Generating audio ${i + 1}/${dialogueLines.length}...`;
-                     line.audioBlob = await generateAudioBlob(line.text, ttsApiKey, line.speaker);
+                for (let i = 0; i < dialogueData.length; i++) {
+                     const line = dialogueData[i];
+                     ui.statusArea.textContent = `Generating audio ${i + 1}/${dialogueData.length}...`;
+                     const audioResult = await generateAudioBlob(line.text, ttsApiKey, line.speaker);
+                     line.audioBlob = audioResult.blob;
+                     line.audioDuration = audioResult.duration;
                 }
+
                 ui.statusArea.textContent = 'Combining audio files...';
-                const finalAudioBlob = await concatenateAudio(dialogueLines);
+                const finalAudioBlob = await concatenateAudio(dialogueData.map(d => d.audioBlob));
                 const audioUrl = URL.createObjectURL(finalAudioBlob);
                 ui.audioPlayer.src = audioUrl;
                 ui.audioPlayer.classList.remove('hidden');
@@ -654,8 +685,8 @@ Begin the script now.`;
             }
         }
 
-        async function handleImageGeneration() {
-            const topic = ui.scriptPromptInput.value.trim();
+        async function handleImageGeneration(isForVideo = false, promptOverride = null) {
+            const topic = promptOverride || ui.scriptPromptInput.value.trim();
             const style = ui.imageStyleInput.value.trim();
             const token = ui.tokenInput.value.trim();
             const projectId = ui.projectIdInput.value.trim();
@@ -663,17 +694,19 @@ Begin the script now.`;
             const aspectRatio = ui.aspectRatioSelect.value;
 
             if (!topic || !token || !projectId) {
-                alert("Please fill out the Project ID, Access Token, and Topic fields.");
-                return;
+                if (!isForVideo) alert("Please fill out the Project ID, Access Token, and Topic fields.");
+                throw new Error("Missing credentials or topic for image generation.");
             }
             
             const imagePrompt = `${topic}, ${style}`;
 
-            ui.imageOutputArea.classList.remove('hidden');
-            ui.imageLoader.classList.remove('hidden');
-            ui.generatedImage.classList.add('hidden');
-            ui.regenerateImageBtn.classList.add('hidden');
-            ui.generateImageBtn.disabled = true;
+            if (!isForVideo) {
+                ui.imageOutputArea.classList.remove('hidden');
+                ui.imageLoader.classList.remove('hidden');
+                ui.generatedImage.classList.add('hidden');
+                ui.regenerateImageBtn.classList.add('hidden');
+                ui.generateImageBtn.disabled = true;
+            }
 
             try {
                 const url = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${LOCATION}/publishers/google/models/${modelId}:predict`;
@@ -702,19 +735,127 @@ Begin the script now.`;
                     throw new Error("Imagen API did not return image content.");
                 }
                 const base64Data = result.predictions[0].bytesBase64Encoded;
-                ui.generatedImage.src = `data:image/png;base64,${base64Data}`;
-                ui.generatedImage.classList.remove('hidden');
-                ui.regenerateImageBtn.classList.remove('hidden');
+                
+                if (isForVideo) {
+                    return base64Data;
+                } else {
+                    ui.generatedImage.src = `data:image/png;base64,${base64Data}`;
+                    ui.generatedImage.classList.remove('hidden');
+                    ui.regenerateImageBtn.classList.remove('hidden');
+                }
 
             } catch (error) {
                 console.error("Image generation failed:", error);
-                alert(`Image Generation Error: ${error.message}`);
-                ui.imageOutputArea.classList.add('hidden');
+                if (!isForVideo) {
+                    alert(`Image Generation Error: ${error.message}`);
+                    ui.imageOutputArea.classList.add('hidden');
+                }
+                throw error; // Re-throw for video generation to handle
             } finally {
-                ui.imageLoader.classList.add('hidden');
-                ui.generateImageBtn.disabled = false;
+                if (!isForVideo) {
+                    ui.imageLoader.classList.add('hidden');
+                    ui.generateImageBtn.disabled = false;
+                }
             }
         }
+
+        async function handleVideoGeneration() {
+            if (dialogueData.length === 0) {
+                alert("Please generate audio first. The video requires the generated script and audio timings.");
+                return;
+            }
+
+            ui.generateVideoBtn.disabled = true;
+            ui.generateVideoBtn.textContent = 'Generating Video...';
+            ui.videoStatusArea.textContent = 'Starting video generation...';
+            ui.videoOutputArea.classList.add('hidden');
+
+            try {
+                // 1. Generate an image for each dialogue line
+                for (let i = 0; i < dialogueData.length; i++) {
+                    ui.videoStatusArea.textContent = `Generating image ${i + 1}/${dialogueData.length}...`;
+                    const imagePrompt = `An illustration for a podcast dialogue line: "${dialogueData[i].text}"`;
+                    dialogueData[i].imageBase64 = await handleImageGeneration(true, imagePrompt);
+                }
+
+                // 2. Simulate video creation by playing a slideshow
+                ui.videoStatusArea.textContent = 'Assembling video...';
+                await createAndPlaySlideshow();
+
+                ui.videoStatusArea.textContent = 'Video ready!';
+                // Note: True video download is complex. This will be a placeholder.
+                ui.downloadVideoLink.classList.remove('hidden');
+                ui.downloadVideoLink.href = ui.generatedVideo.src;
+                ui.downloadVideoLink.download = "ai_dialogue_video.mp4";
+
+
+            } catch (error) {
+                console.error("Video Generation failed:", error);
+                ui.videoStatusArea.textContent = `Error: ${error.message}`;
+            } finally {
+                ui.generateVideoBtn.disabled = false;
+                ui.generateVideoBtn.textContent = 'Generate Video';
+            }
+        }
+
+        async function createAndPlaySlideshow() {
+            return new Promise(async (resolve) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const firstImage = new Image();
+                
+                firstImage.onload = async () => {
+                    canvas.width = firstImage.width;
+                    canvas.height = firstImage.height;
+
+                    const mediaRecorder = new MediaRecorder(canvas.captureStream());
+                    const chunks = [];
+                    mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+                    
+                    mediaRecorder.onstop = () => {
+                        const videoBlob = new Blob(chunks, { type: 'video/mp4' });
+                        const finalAudioBlob = new Blob(dialogueData.map(d => d.audioBlob), { type: 'audio/mp3' });
+                        
+                        // This part is complex and requires server-side or advanced library processing (like ffmpeg.wasm)
+                        // For this demo, we will just play the visual slideshow and provide the combined audio separately.
+                        // A more advanced implementation would merge the video and audio streams.
+                        const videoUrl = URL.createObjectURL(videoBlob);
+                        ui.generatedVideo.src = videoUrl;
+                        ui.videoOutputArea.classList.remove('hidden');
+                        
+                        // We attach the full audio to the video player for playback.
+                        const audioUrl = URL.createObjectURL(finalAudioBlob);
+                        const audioForVideo = new Audio(audioUrl);
+                        
+                        ui.generatedVideo.onplay = () => audioForVideo.play();
+                        ui.generatedVideo.onpause = () => audioForVideo.pause();
+                        ui.generatedVideo.onseeked = () => {
+                            audioForVideo.currentTime = ui.generatedVideo.currentTime;
+                        };
+                        
+                        resolve();
+                    };
+
+                    mediaRecorder.start();
+
+                    for (const line of dialogueData) {
+                        const img = new Image();
+                        await new Promise(res => {
+                            img.onload = res;
+                            img.src = `data:image/png;base64,${line.imageBase64}`;
+                        });
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        // Hold the frame for the duration of the audio
+                        await new Promise(res => setTimeout(res, line.audioDuration * 1000));
+                    }
+
+                    mediaRecorder.stop();
+                };
+                
+                firstImage.src = `data:image/png;base64,${dialogueData[0].imageBase64}`;
+            });
+        }
+
 
         async function generateAudioBlob(text, ttsApiKey, speaker) {
             const voiceSelect = speaker === 'man' ? ui.manVoiceSelect : ui.womanVoiceSelect;
@@ -722,7 +863,15 @@ Begin the script now.`;
             const voiceConfig = JSON.parse(voiceSelect.value);
             const speakingRate = parseFloat(ui.speakingRateSlider.value);
             const base64 = await fetchTTS(text, ttsApiKey, voiceConfig, speakingRate);
-            return await (await fetch(`data:audio/mp3;base64,${base64}`)).blob();
+            const blob = await (await fetch(`data:audio/mp3;base64,${base64}`)).blob();
+            
+            // Get audio duration
+            const duration = await new Promise((resolve) => {
+                const audio = new Audio(URL.createObjectURL(blob));
+                audio.onloadedmetadata = () => resolve(audio.duration);
+            });
+
+            return { blob, duration };
         }
 
         async function fetchTTS(text, ttsApiKey, voiceConfig, speakingRate) {
@@ -759,8 +908,7 @@ Begin the script now.`;
             URL.revokeObjectURL(url);
         }
 
-        async function concatenateAudio(dialogueLines) {
-            const audioBlobs = dialogueLines.map(line => line.audioBlob);
+        async function concatenateAudio(audioBlobs) {
             return new Blob(audioBlobs, { type: 'audio/mp3' });
         }
         
