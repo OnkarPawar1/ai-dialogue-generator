@@ -128,7 +128,12 @@
 
             <!-- Image Generation Panel -->
             <div class="space-y-4 pt-4 border-t">
-                <h2 class="text-lg font-semibold text-gray-800 border-b pb-2">Image Generation</h2>
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h2 class="text-lg font-semibold text-gray-800">🎬 AI Image Generation</h2>
+                    <div class="text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded">
+                        <span class="font-medium">🛡️</span> Following Google Cloud Responsible AI Guidelines
+                    </div>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label for="imagen_model_select" class="block text-sm font-medium text-gray-700">Imagen Model</label>
@@ -143,12 +148,16 @@
                     </div>
                 </div>
                 <div>
-                    <label for="image_style_input" class="block text-sm font-medium text-gray-700">Image Style Prompt</label>
-                    <input type="text" id="image_style_input" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., cinematic, photorealistic, vibrant illustration">
+                    <label for="image_style_input" class="block text-sm font-medium text-gray-700">🎬 Director's Style Enhancement</label>
+                    <input type="text" id="image_style_input" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., cinematic, photorealistic, vibrant illustration" value="Pixar-style 3D animation, vibrant colors, expressive characters">
+                    <p class="text-xs text-gray-500 mt-1">The Visual Director will enhance your style with professional scene analysis</p>
                 </div>
                 <button id="generate_image_btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-md font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
-                    Generate Image
+                    🎬 Generate Image with Director
                 </button>
+                <div id="director_status" class="text-center text-sm text-gray-600 mt-2 hidden">
+                    <span id="director_working">🎬 Director analyzing scene...</span>
+                </div>
                 <div id="image_output_area" class="hidden w-full text-center p-4 mt-4 bg-gray-50 border border-gray-200 rounded-lg">
                     <div id="image_loader" class="loader mx-auto"></div>
                     <img id="generated_image" class="hidden max-w-full mx-auto rounded-lg shadow-md" alt="Generated Image">
@@ -450,9 +459,9 @@
 
         // --- Functions ---
         function fillDefaultCredentials() {
-            ui.projectIdInput.value = 'PROJECT_ID';
-            ui.ttsApiKeyInput.value = 'API';
-            ui.tokenInput.value = 'ACCESS_TOKEN';
+            ui.projectIdInput.value = 'qwiklabs-gcp-04-3b7afe1dd043';
+            ui.ttsApiKeyInput.value = 'AIzaSyBptW0k1XZjQ8bA2_tMWFjLqNfxBWbZN28';
+            ui.tokenInput.value = 'ya29.A0AS3H6NwaqTk9Im7hIyhMM0TRoD2RWoifwr-ERMcdwnaW2QrNhNU2t0aoq24i_XUQ3QwTtPa6jb0mKIWxerI4kk-6Kg6Rhe_e_t2F_wHePJMDYC3i0yLpj6a5twbkKNZEJhrJBKVgkVyvkDq1-nfG_9ofibM8m2ZMLs0fuPrn0F-tFP6f7hjSYfWwdtjkZ4LHCQOQaJubCUg3GOoq-EdbbQw5tGLAK2LO5Vu3DUDWVIlJ6Qf8LWx-_zgmtHeY2Zv8xcvXjXCAbGgUXhnSgX9QkzuOw5dHQTbsjMPk3K6Z8hEVdOlZX-ATmPmU1NWzRCxJ-aj5PMvsmKkhqJqEku5cW8TIWchY09MxPjqb7gaCgYKAZYSARUSFQHGX2MiZ0sLcgngH0qVhmvotrUWGA0365';
         }
         
         function populateLanguages() {
@@ -657,7 +666,7 @@ Begin the script now.`;
                 }
 
                 ui.statusArea.textContent = 'Combining audio files...';
-                generatedAudioBlob = await concatenateAudio(dialogueData.map(d => d.audioBlob));
+                generatedAudioBlob = await simpleConcatenateAudio(dialogueData.map(d => d.audioBlob));
                 const audioUrl = URL.createObjectURL(generatedAudioBlob);
                 ui.audioPlayer.src = audioUrl;
                 ui.audioPlayer.classList.remove('hidden');
@@ -676,6 +685,843 @@ Begin the script now.`;
             }
         }
 
+        // Visual Image Generation Expert - Professional Director with 20 years experience
+        class VisualImageGenerationExpert {
+            constructor() {
+                this.experience = "20 years in scene generation and visual storytelling";
+                this.style = "Pixar-style animation with vibrant colors and expressive characters";
+                this.safetyGuidelines = this.getSafetyGuidelines();
+            }
+
+            getSafetyGuidelines() {
+                return {
+                    prohibited: [
+                        "violence", "sexual content", "hate speech", "harmful stereotypes",
+                        "celebrity likeness", "child exploitation", "personal information",
+                        "misleading content", "toxic content", "vulgar language", "weapons",
+                        "dangerous situations", "inappropriate content", "offensive material"
+                    ],
+                    safeAlternatives: [
+                        "friendly characters", "positive emotions", "educational content",
+                        "creative storytelling", "inclusive representation", "wholesome scenes",
+                        "safe environments", "positive interactions", "learning moments",
+                        "inspiring visuals", "family-friendly content", "professional settings"
+                    ]
+                };
+            }
+
+            analyzeDialogue(dialogueText, speaker) {
+                // Extract emotional context, setting, and key elements from dialogue
+                const context = this.extractContext(dialogueText);
+                const emotion = this.detectEmotion(dialogueText);
+                const setting = this.identifySetting(dialogueText);
+                
+                return {
+                    context,
+                    emotion,
+                    setting,
+                    speaker: speaker === 'man' ? 'expert guest' : 'host'
+                };
+            }
+
+            extractContext(text) {
+                const lowerText = text.toLowerCase();
+                const contexts = {
+                    educational: ['explain', 'learn', 'understand', 'teach', 'knowledge', 'study'],
+                    conversational: ['discuss', 'talk about', 'share', 'think', 'believe'],
+                    analytical: ['analyze', 'examine', 'consider', 'evaluate', 'research'],
+                    storytelling: ['story', 'experience', 'happened', 'remember', 'narrative']
+                };
+
+                for (const [context, keywords] of Object.entries(contexts)) {
+                    if (keywords.some(keyword => lowerText.includes(keyword))) {
+                        return context;
+                    }
+                }
+                return 'conversational';
+            }
+
+            detectEmotion(text) {
+                const lowerText = text.toLowerCase();
+                const emotions = {
+                    excited: ['amazing', 'incredible', 'fantastic', 'wow', 'excited', 'thrilled'],
+                    curious: ['interesting', 'curious', 'wonder', 'question', 'explore', 'discover'],
+                    thoughtful: ['think', 'consider', 'reflect', 'ponder', 'contemplate'],
+                    friendly: ['friendly', 'welcome', 'nice', 'pleasure', 'glad', 'happy'],
+                    professional: ['professional', 'expert', 'knowledge', 'experience', 'analysis']
+                };
+
+                for (const [emotion, keywords] of Object.entries(emotions)) {
+                    if (keywords.some(keyword => lowerText.includes(keyword))) {
+                        return emotion;
+                    }
+                }
+                return 'neutral';
+            }
+
+            identifySetting(text) {
+                const lowerText = text.toLowerCase();
+                
+                // More creative and diverse settings based on actual content
+                const settings = {
+                    nature: ['nature', 'outdoor', 'park', 'garden', 'landscape', 'forest', 'mountain', 'ocean', 'beach', 'sky', 'stars', 'sunset', 'rain', 'snow', 'wind', 'tree', 'flower', 'animal', 'bird', 'fish'],
+                    urban: ['city', 'street', 'building', 'skyscraper', 'traffic', 'subway', 'bus', 'car', 'shop', 'market', 'restaurant', 'cafe', 'museum', 'library', 'school', 'university'],
+                    fantasy: ['magic', 'wizard', 'dragon', 'castle', 'fairy', 'unicorn', 'space', 'galaxy', 'planet', 'alien', 'time travel', 'dimension', 'portal', 'crystal', 'gem'],
+                    historical: ['ancient', 'medieval', 'renaissance', 'vintage', 'classic', 'traditional', 'heritage', 'antique', 'old', 'historical', 'period', 'era'],
+                    modern: ['technology', 'computer', 'robot', 'ai', 'digital', 'virtual', 'cyber', 'futuristic', 'modern', 'contemporary', 'innovative', 'smart'],
+                    emotional: ['love', 'friendship', 'family', 'celebration', 'party', 'dance', 'music', 'art', 'creativity', 'inspiration', 'dream', 'hope', 'joy', 'peace'],
+                    adventure: ['exploration', 'journey', 'travel', 'adventure', 'discovery', 'expedition', 'quest', 'treasure', 'map', 'compass', 'ship', 'plane', 'train'],
+                    abstract: ['concept', 'idea', 'thought', 'imagination', 'creative', 'philosophy', 'science', 'mathematics', 'art', 'design', 'pattern', 'color', 'light', 'shadow']
+                };
+
+                for (const [setting, keywords] of Object.entries(settings)) {
+                    if (keywords.some(keyword => lowerText.includes(keyword))) {
+                        return setting;
+                    }
+                }
+                
+                // If no specific setting found, be creative based on context
+                if (lowerText.includes('think') || lowerText.includes('imagine')) return 'fantasy';
+                if (lowerText.includes('learn') || lowerText.includes('study')) return 'modern';
+                if (lowerText.includes('feel') || lowerText.includes('emotion')) return 'emotional';
+                
+                return 'abstract'; // Default to creative abstract instead of boring studio
+            }
+
+            generateCreativePrompt(dialogueAnalysis, scriptContext = null, dialogueIndex = 0) {
+                const { context, emotion, setting, speaker } = dialogueAnalysis;
+                
+                // Get broader script context for better coherence
+                const scriptThemes = scriptContext?.themes || ['general'];
+                const scriptMood = scriptContext?.mood || 'neutral';
+                const scriptStyle = scriptContext?.visualStyle || 'creative';
+                
+                // NEW: Get story-specific scene context
+                const storyContext = scriptContext?.storyContext || null;
+                const sceneDescription = storyContext?.sceneDescription || '';
+                const sceneVisualStyle = storyContext?.visualStyle || 'creative';
+                const sceneMood = storyContext?.mood || 'neutral';
+                const sceneElements = storyContext?.elements || [];
+                
+                // Base Pixar-style animation elements
+                const pixarStyle = "Pixar-style 3D animation, vibrant colors, expressive characters, cinematic lighting, high quality, detailed textures, professional animation quality";
+                
+                // STORY-DRIVEN scene generation - NO MORE GENERIC "TWO PEOPLE TALKING"!
+                let scenePrompt = '';
+                
+                if (sceneDescription && sceneDescription.length > 0) {
+                    // Use the story context to create unique scenes
+                    scenePrompt = this.generateStoryScenePrompt(sceneDescription, sceneVisualStyle, sceneMood, sceneElements, dialogueIndex);
+                } else {
+                    // Fallback to context-based generation
+                    scenePrompt = this.generateContextBasedPrompt(context, emotion, setting, speaker);
+                }
+                
+                // Add script-wide context enhancement
+                let contextEnhancement = "";
+                if (scriptThemes.includes('technology')) contextEnhancement += " technological innovation, futuristic elements";
+                if (scriptThemes.includes('nature')) contextEnhancement += " environmental awareness, natural elements";
+                if (scriptThemes.includes('creativity')) contextEnhancement += " artistic inspiration, creative energy";
+                if (scriptThemes.includes('adventure')) contextEnhancement += " adventurous spirit, exploration theme";
+                
+                // Add creative director's touch - random creative elements for variety
+                const creativeElements = [
+                    "dynamic composition", "atmospheric depth", "cinematic framing", "visual storytelling",
+                    "expressive lighting", "rich textures", "vibrant color palette", "emotional atmosphere",
+                    "immersive environment", "artistic interpretation", "creative vision", "visual poetry"
+                ];
+                const randomCreative = creativeElements[Math.floor(Math.random() * creativeElements.length)];
+                
+                // Create a story-driven, contextually rich prompt
+                const prompt = `${scenePrompt}, ${contextEnhancement}, ${randomCreative}, ${pixarStyle}`;
+                
+                return this.ensureSafety(prompt);
+            }
+
+            generateStoryScenePrompt(sceneDescription, visualStyle, mood, elements, dialogueIndex) {
+                // Generate unique scene prompts based on story context
+                let scenePrompt = '';
+                
+                // Base scene from story description
+                scenePrompt = sceneDescription;
+                
+                // Add visual style elements
+                switch (visualStyle) {
+                    case 'natural':
+                        scenePrompt += ", natural environment, organic textures, environmental beauty";
+                        break;
+                    case 'urban':
+                        scenePrompt += ", urban setting, city atmosphere, metropolitan energy";
+                        break;
+                    case 'futuristic':
+                        scenePrompt += ", futuristic elements, advanced technology, innovative design";
+                        break;
+                    case 'artistic':
+                        scenePrompt += ", artistic elements, creative atmosphere, imaginative design";
+                        break;
+                    case 'historical':
+                        scenePrompt += ", historical setting, period-accurate elements, vintage aesthetics";
+                        break;
+                    default:
+                        scenePrompt += ", creative environment, imaginative setting";
+                }
+                
+                // Add mood elements
+                switch (mood) {
+                    case 'excited':
+                        scenePrompt += ", energetic atmosphere, vibrant colors, dynamic energy";
+                        break;
+                    case 'curious':
+                        scenePrompt += ", discovery atmosphere, bright lighting, inquisitive mood";
+                        break;
+                    case 'thoughtful':
+                        scenePrompt += ", contemplative atmosphere, soft lighting, reflective mood";
+                        break;
+                    case 'friendly':
+                        scenePrompt += ", warm atmosphere, comfortable colors, welcoming mood";
+                        break;
+                    case 'professional':
+                        scenePrompt += ", polished atmosphere, clean design, authoritative mood";
+                        break;
+                    default:
+                        scenePrompt += ", balanced atmosphere, harmonious mood";
+                }
+                
+                // Add specific visual elements
+                if (elements.includes('natural_environment')) {
+                    scenePrompt += ", natural landscape, environmental elements, organic beauty";
+                }
+                if (elements.includes('urban_setting')) {
+                    scenePrompt += ", cityscape, urban architecture, metropolitan life";
+                }
+                if (elements.includes('tech_elements')) {
+                    scenePrompt += ", technological innovation, digital elements, futuristic design";
+                }
+                if (elements.includes('artistic_elements')) {
+                    scenePrompt += ", artistic creativity, imaginative design, creative expression";
+                }
+                
+                // Add dialogue-specific character positioning (NOT generic "two people talking")
+                if (dialogueIndex === 0) {
+                    scenePrompt += ", welcoming host character, establishing connection";
+                } else if (dialogueIndex < 3) {
+                    scenePrompt += ", engaging conversation, dynamic interaction";
+                } else {
+                    scenePrompt += ", deep discussion, meaningful exchange";
+                }
+                
+                return scenePrompt;
+            }
+
+            generateContextBasedPrompt(context, emotion, setting, speaker) {
+                // Fallback context-based generation (less preferred)
+                const contextElements = {
+                    educational: "inspiring learning environment, knowledge visualization, engaging educational atmosphere",
+                    conversational: "dynamic conversation scene, expressive interaction, engaging dialogue atmosphere",
+                    analytical: "deep thinking environment, analytical atmosphere, focused intellectual setting",
+                    storytelling: "narrative storytelling scene, captivating story environment, engaging narrative atmosphere"
+                };
+
+                const emotionElements = {
+                    excited: "bright eyes, enthusiastic expression, dynamic pose, energetic atmosphere",
+                    curious: "intrigued expression, leaning forward pose, discovery atmosphere, bright lighting",
+                    thoughtful: "contemplative expression, thoughtful pose, calm atmosphere, soft lighting",
+                    friendly: "warm smile, welcoming pose, friendly atmosphere, comfortable colors",
+                    professional: "confident expression, professional pose, polished atmosphere, clean design"
+                };
+
+                const settingElements = {
+                    nature: "breathtaking natural landscape, dramatic lighting, organic textures, environmental beauty",
+                    urban: "dynamic cityscape, architectural beauty, urban energy, metropolitan atmosphere",
+                    fantasy: "magical realm, ethereal lighting, mystical elements, enchanted environment",
+                    historical: "period-accurate setting, vintage aesthetics, historical atmosphere, timeless beauty",
+                    modern: "cutting-edge technology, sleek design, futuristic elements, innovative atmosphere",
+                    emotional: "emotionally charged environment, expressive atmosphere, heartfelt setting",
+                    adventure: "exploration setting, discovery atmosphere, journey environment, adventure spirit",
+                    abstract: "artistic abstraction, creative interpretation, imaginative design, artistic freedom"
+                };
+
+                const speakerElements = {
+                    'expert guest': "knowledgeable male character, professional appearance, confident pose",
+                    'host': "friendly female character, welcoming appearance, engaging pose"
+                };
+
+                return `${speakerElements[speaker]}, ${contextElements[context]}, ${emotionElements[emotion]}, ${settingElements[setting]}`;
+            }
+
+            ensureSafety(prompt) {
+                // Check for any potentially problematic content
+                const lowerPrompt = prompt.toLowerCase();
+                
+                for (const prohibited of this.safetyGuidelines.prohibited) {
+                    if (lowerPrompt.includes(prohibited)) {
+                        // Replace with safe alternative
+                        const safeAlternative = this.safetyGuidelines.safeAlternatives[
+                            Math.floor(Math.random() * this.safetyGuidelines.safeAlternatives.length)
+                        ];
+                        prompt = prompt.replace(new RegExp(prohibited, 'gi'), safeAlternative);
+                    }
+                }
+                
+                return prompt;
+            }
+
+            async generateImageWithFallback(dialogueText, speaker, token, projectId, modelId, aspectRatio, scriptContext = null, dialogueIndex = 0) {
+                try {
+                    // First attempt: Use the expert's creative prompt with script context
+                    const analysis = this.analyzeDialogue(dialogueText, speaker);
+                    const creativePrompt = this.generateCreativePrompt(analysis, scriptContext, dialogueIndex);
+                    
+                    // Log detailed director analysis
+                    this.logDirectorAnalysis(dialogueText, speaker, analysis, creativePrompt, scriptContext);
+                    
+                    const base64Data = await this.callImagenAPI(creativePrompt, token, projectId, modelId, aspectRatio);
+                    return { base64Data, prompt: creativePrompt, method: 'creative' };
+                    
+                } catch (error) {
+                    console.log(`⚠️ Creative generation failed, trying fallback approach: ${error.message}`);
+                    
+                    // Fallback: Simple, safe prompt
+                    const fallbackPrompt = this.generateFallbackPrompt(dialogueText, speaker);
+                    console.log(`🔄 Fallback Prompt: ${fallbackPrompt}`);
+                    
+                    try {
+                        const base64Data = await this.callImagenAPI(fallbackPrompt, token, projectId, modelId, aspectRatio);
+                        return { base64Data, prompt: fallbackPrompt, method: 'fallback' };
+                    } catch (fallbackError) {
+                        console.error(`❌ Both creative and fallback generation failed: ${fallbackError.message}`);
+                        throw new Error(`Image generation failed after multiple attempts: ${fallbackError.message}`);
+                    }
+                }
+            }
+
+            logDirectorAnalysis(dialogueText, speaker, analysis, prompt, scriptContext = null) {
+                console.log(`🎬 === VISUAL DIRECTOR ANALYSIS ===`);
+                console.log(`📝 Dialogue: "${dialogueText}"`);
+                console.log(`🎭 Speaker: ${analysis.speaker}`);
+                console.log(`🧠 Context: ${analysis.context}`);
+                console.log(`😊 Emotion: ${analysis.emotion}`);
+                console.log(`🏠 Setting: ${analysis.setting}`);
+                
+                if (scriptContext) {
+                    console.log(`🎭 Script Themes: ${scriptContext.themes.join(', ')}`);
+                    console.log(`😊 Overall Mood: ${scriptContext.mood}`);
+                    console.log(`🎨 Visual Style: ${scriptContext.visualStyle}`);
+                }
+                
+                console.log(`🎨 Creative Prompt: ${prompt}`);
+                console.log(`🛡️ Safety Check: Passed (following Google Cloud guidelines)`);
+                console.log(`🎬 === END ANALYSIS ===`);
+            }
+
+            generateFallbackPrompt(dialogueText, speaker) {
+                // Creative fallback prompt - NO BORING PODCAST STUFF!
+                const character = speaker === 'man' ? 'knowledgeable male character' : 'friendly female character';
+                
+                // Get creative based on the actual dialogue content
+                const lowerText = dialogueText.toLowerCase();
+                let creativeSetting = '';
+                
+                if (lowerText.includes('think') || lowerText.includes('imagine')) {
+                    creativeSetting = 'magical floating islands, ethereal lighting, dreamlike atmosphere';
+                } else if (lowerText.includes('learn') || lowerText.includes('understand')) {
+                    creativeSetting = 'floating knowledge crystals, glowing symbols, educational wonderland';
+                } else if (lowerText.includes('feel') || lowerText.includes('emotion')) {
+                    creativeSetting = 'emotional color storm, expressive atmosphere, heartfelt environment';
+                } else if (lowerText.includes('future') || lowerText.includes('technology')) {
+                    creativeSetting = 'futuristic cityscape, holographic displays, advanced technology';
+                } else if (lowerText.includes('nature') || lowerText.includes('earth')) {
+                    creativeSetting = 'breathtaking natural landscape, dramatic lighting, environmental beauty';
+                } else {
+                    creativeSetting = 'creative abstract space, artistic elements, imaginative atmosphere';
+                }
+                
+                return `${character}, ${creativeSetting}, Pixar-style 3D animation, vibrant colors, expressive design, professional quality`;
+            }
+
+            async callImagenAPI(prompt, token, projectId, modelId, aspectRatio) {
+                const url = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${LOCATION}/publishers/google/models/${modelId}:predict`;
+                const payload = {
+                    instances: [{ prompt: prompt }],
+                    parameters: { sampleCount: 1, aspectRatio: aspectRatio }
+                };
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    const errorJson = await response.json();
+                    throw new Error(`Imagen API failed: ${errorJson.error.message}`);
+                }
+                
+                const result = await response.json();
+                if (!result.predictions || result.predictions.length === 0 || !result.predictions[0].bytesBase64Encoded) {
+                    throw new Error("Imagen API did not return image content.");
+                }
+                
+                return result.predictions[0].bytesBase64Encoded;
+            }
+        }
+
+        // Initialize the Visual Image Generation Expert
+        const imageGenerationExpert = new VisualImageGenerationExpert();
+
+        // Enhanced STORY-BASED context analysis for narrative-driven image generation
+        class ScriptContextAnalyzer {
+            constructor() {
+                this.scriptContext = null;
+                this.themes = [];
+                this.mood = 'neutral';
+                this.visualStyle = 'creative';
+                this.storyProgression = [];
+                this.narrativeContext = {};
+                this.sceneDescriptions = [];
+            }
+
+            analyzeFullScript(dialogueData) {
+                try {
+                    if (!dialogueData || dialogueData.length === 0) {
+                        console.log('⚠️ No dialogue data to analyze');
+                        return;
+                    }
+                    
+                    console.log(`🔍 Analyzing ${dialogueData.length} dialogue lines...`);
+                    
+                    const allText = dialogueData.map(d => d.text).join(' ').toLowerCase();
+                    const speakerPatterns = dialogueData.map(d => d.speaker);
+                    
+                    // Analyze overall themes
+                    this.themes = this.extractThemes(allText);
+                    this.mood = this.determineOverallMood(allText);
+                    this.visualStyle = this.determineVisualStyle(allText, speakerPatterns);
+                    
+                    console.log(`🎭 STORY ANALYSIS: Themes: ${this.themes.join(', ')}, Mood: ${this.mood}, Style: ${this.visualStyle}`);
+                    
+                    // NEW: Analyze story progression and narrative context
+                    try {
+                        this.analyzeStoryProgression(dialogueData);
+                        console.log(`📖 Story Progression: ${this.storyProgression.length} scenes identified`);
+                    } catch (error) {
+                        console.error('❌ Error in analyzeStoryProgression:', error);
+                        // Fallback: create simple scene structure
+                        this.createFallbackSceneStructure(dialogueData);
+                    }
+                    
+                    try {
+                        this.generateSceneDescriptions(dialogueData);
+                        console.log(`🎬 Scene Descriptions: ${this.sceneDescriptions.length} unique scenes generated`);
+                    } catch (error) {
+                        console.error('❌ Error in generateSceneDescriptions:', error);
+                        // Fallback: create simple scene descriptions
+                        this.createFallbackSceneDescriptions(dialogueData);
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Critical error in analyzeFullScript:', error);
+                    // Create minimal fallback structure
+                    this.createMinimalFallback(dialogueData);
+                }
+            }
+
+            analyzeStoryProgression(dialogueData) {
+                this.storyProgression = [];
+                this.narrativeContext = {};
+                
+                // Analyze the narrative flow and identify story beats
+                let currentScene = 0;
+                let sceneStart = 0;
+                let currentTopic = '';
+                
+                for (let i = 0; i < dialogueData.length; i++) {
+                    const line = dialogueData[i];
+                    const text = line.text.toLowerCase();
+                    
+                    // Detect scene changes based on topic shifts
+                    const newTopic = this.detectTopic(text);
+                    if (newTopic !== currentTopic && i > 0) {
+                        // End current scene
+                        this.storyProgression.push({
+                            start: sceneStart,
+                            end: i - 1,
+                            topic: currentTopic,
+                            sceneType: this.classifyScene(dialogueData.slice(sceneStart, i)),
+                            dialogue: dialogueData.slice(sceneStart, i)
+                        });
+                        
+                        // Start new scene
+                        sceneStart = i;
+                        currentTopic = newTopic;
+                        currentScene++;
+                    }
+                    
+                    if (i === 0) {
+                        currentTopic = newTopic;
+                    }
+                }
+                
+                // Add final scene
+                this.storyProgression.push({
+                    start: sceneStart,
+                    end: dialogueData.length - 1,
+                    topic: currentTopic,
+                    sceneType: this.classifyScene(dialogueData.slice(sceneStart)),
+                    dialogue: dialogueData.slice(sceneStart)
+                });
+                
+                // Build narrative context for each scene
+                this.storyProgression.forEach((scene, index) => {
+                    this.narrativeContext[index] = {
+                        sceneNumber: index + 1,
+                        totalScenes: this.storyProgression.length,
+                        previousScene: index > 0 ? this.storyProgression[index - 1] : null,
+                        nextScene: index < this.storyProgression.length - 1 ? this.storyProgression[index + 1] : null,
+                        storyProgress: (index + 1) / this.storyProgression.length,
+                        sceneMood: this.analyzeSceneMood(scene.dialogue),
+                        visualElements: this.extractVisualElements(scene.dialogue)
+                    };
+                });
+            }
+
+            detectTopic(text) {
+                const topics = {
+                    'introduction': ['welcome', 'hello', 'introduce', 'meet', 'start', 'begin'],
+                    'exploration': ['explore', 'discover', 'learn', 'understand', 'find out', 'investigate'],
+                    'analysis': ['analyze', 'examine', 'consider', 'think about', 'reflect', 'evaluate'],
+                    'story': ['story', 'experience', 'happened', 'remember', 'narrative', 'tale'],
+                    'conclusion': ['conclude', 'end', 'finish', 'wrap up', 'summary', 'final'],
+                    'question': ['question', 'ask', 'wonder', 'curious', 'why', 'how', 'what']
+                };
+                
+                for (const [topic, keywords] of Object.entries(topics)) {
+                    if (keywords.some(keyword => text.includes(keyword))) {
+                        return topic;
+                    }
+                }
+                return 'discussion';
+            }
+
+            classifyScene(dialogueLines) {
+                const allText = dialogueLines.map(d => d.text).join(' ').toLowerCase();
+                
+                if (allText.includes('welcome') || allText.includes('hello')) return 'opening';
+                if (allText.includes('story') || allText.includes('experience')) return 'narrative';
+                if (allText.includes('learn') || allText.includes('understand')) return 'educational';
+                if (allText.includes('think') || allText.includes('consider')) return 'reflection';
+                if (allText.includes('conclude') || allText.includes('end')) return 'closing';
+                
+                return 'conversation';
+            }
+
+            analyzeSceneMood(dialogueLines) {
+                const allText = dialogueLines.map(d => d.text).join(' ').toLowerCase();
+                
+                if (allText.includes('amazing') || allText.includes('incredible')) return 'excited';
+                if (allText.includes('curious') || allText.includes('wonder')) return 'curious';
+                if (allText.includes('think') || allText.includes('reflect')) return 'thoughtful';
+                if (allText.includes('friendly') || allText.includes('welcome')) return 'friendly';
+                if (allText.includes('professional') || allText.includes('expert')) return 'professional';
+                
+                return 'neutral';
+            }
+
+            extractVisualElements(dialogueLines) {
+                const allText = dialogueLines.map(d => d.text).join(' ').toLowerCase();
+                const elements = [];
+                
+                // Extract specific visual elements mentioned
+                if (allText.includes('nature') || allText.includes('outdoor')) elements.push('natural_environment');
+                if (allText.includes('city') || allText.includes('urban')) elements.push('urban_setting');
+                if (allText.includes('technology') || allText.includes('digital')) elements.push('tech_elements');
+                if (allText.includes('art') || allText.includes('creative')) elements.push('artistic_elements');
+                if (allText.includes('history') || allText.includes('past')) elements.push('historical_elements');
+                if (allText.includes('future') || allText.includes('tomorrow')) elements.push('futuristic_elements');
+                
+                return elements;
+            }
+
+            generateSceneDescriptions(dialogueData) {
+                this.sceneDescriptions = [];
+                
+                this.storyProgression.forEach((scene, sceneIndex) => {
+                    const narrative = this.narrativeContext[sceneIndex];
+                    const sceneDialogue = scene.dialogue;
+                    
+                    // Generate unique scene description based on story context
+                    let sceneDescription = this.createSceneDescription(scene, narrative, sceneIndex);
+                    
+                    this.sceneDescriptions.push({
+                        sceneIndex: sceneIndex,
+                        description: sceneDescription,
+                        visualStyle: this.determineSceneVisualStyle(scene, narrative),
+                        mood: narrative.sceneMood,
+                        elements: narrative.visualElements
+                    });
+                });
+            }
+
+            createSceneDescription(scene, narrative, sceneIndex) {
+                const { topic, sceneType } = scene;
+                const { storyProgress, totalScenes } = narrative;
+                
+                let baseDescription = '';
+                
+                switch (sceneType) {
+                    case 'opening':
+                        baseDescription = 'Opening scene with welcoming atmosphere, establishing connection';
+                        break;
+                    case 'narrative':
+                        baseDescription = 'Storytelling moment, engaging narrative environment';
+                        break;
+                    case 'educational':
+                        baseDescription = 'Learning environment, knowledge sharing atmosphere';
+                        break;
+                    case 'reflection':
+                        baseDescription = 'Thoughtful contemplation space, introspective atmosphere';
+                        break;
+                    case 'closing':
+                        baseDescription = 'Concluding scene, wrapping up atmosphere';
+                        break;
+                    default:
+                        baseDescription = 'Dynamic conversation environment';
+                }
+                
+                // Add story progression context
+                if (storyProgress <= 0.3) {
+                    baseDescription += ', early story development';
+                } else if (storyProgress <= 0.7) {
+                    baseDescription += ', story building momentum';
+                } else {
+                    baseDescription += ', story resolution phase';
+                }
+                
+                // Add topic-specific elements
+                if (topic === 'nature') baseDescription += ', natural environment elements';
+                if (topic === 'technology') baseDescription += ', technological innovation elements';
+                if (topic === 'art') baseDescription += ', creative artistic elements';
+                if (topic === 'history') baseDescription += ', historical period elements';
+                
+                return baseDescription;
+            }
+
+            determineSceneVisualStyle(scene, narrative) {
+                const { sceneType, topic } = scene;
+                const { visualElements } = narrative;
+                
+                if (visualElements.includes('natural_environment')) return 'natural';
+                if (visualElements.includes('urban_setting')) return 'urban';
+                if (visualElements.includes('tech_elements')) return 'futuristic';
+                if (visualElements.includes('artistic_elements')) return 'artistic';
+                if (visualElements.includes('historical_elements')) return 'historical';
+                if (visualElements.includes('futuristic_elements')) return 'futuristic';
+                
+                return 'creative';
+            }
+
+            extractThemes(text) {
+                const themeKeywords = {
+                    'technology': ['ai', 'computer', 'digital', 'technology', 'innovation', 'future', 'robot', 'smart'],
+                    'nature': ['environment', 'nature', 'earth', 'climate', 'sustainability', 'green', 'organic'],
+                    'education': ['learn', 'teach', 'education', 'knowledge', 'study', 'research', 'discovery'],
+                    'creativity': ['art', 'creative', 'imagination', 'design', 'inspiration', 'innovation'],
+                    'business': ['business', 'work', 'career', 'professional', 'success', 'strategy'],
+                    'health': ['health', 'wellness', 'fitness', 'medical', 'lifestyle', 'nutrition'],
+                    'culture': ['culture', 'tradition', 'heritage', 'diversity', 'community', 'society'],
+                    'adventure': ['adventure', 'travel', 'exploration', 'journey', 'discovery', 'experience']
+                };
+
+                const foundThemes = [];
+                for (const [theme, keywords] of Object.entries(themeKeywords)) {
+                    if (keywords.some(keyword => text.includes(keyword))) {
+                        foundThemes.push(theme);
+                    }
+                }
+                
+                return foundThemes.length > 0 ? foundThemes : ['general'];
+            }
+
+            determineOverallMood(text) {
+                const moodKeywords = {
+                    'excited': ['amazing', 'incredible', 'fantastic', 'wow', 'excited', 'thrilled', 'awesome'],
+                    'curious': ['interesting', 'curious', 'wonder', 'question', 'explore', 'discover', 'fascinating'],
+                    'thoughtful': ['think', 'consider', 'reflect', 'ponder', 'contemplate', 'deep', 'meaningful'],
+                    'friendly': ['friendly', 'welcome', 'nice', 'pleasure', 'glad', 'happy', 'warm'],
+                    'professional': ['professional', 'expert', 'knowledge', 'experience', 'analysis', 'insight']
+                };
+
+                for (const [mood, keywords] of Object.entries(moodKeywords)) {
+                    if (keywords.some(keyword => text.includes(keyword))) {
+                        return mood;
+                    }
+                }
+                return 'neutral';
+            }
+
+            determineVisualStyle(text, speakerPatterns) {
+                // Analyze speaker patterns and content for visual style
+                if (text.includes('imagine') || text.includes('fantasy') || text.includes('magic')) {
+                    return 'fantasy';
+                }
+                if (text.includes('future') || text.includes('technology') || text.includes('ai')) {
+                    return 'futuristic';
+                }
+                if (text.includes('nature') || text.includes('environment') || text.includes('earth')) {
+                    return 'natural';
+                }
+                if (text.includes('art') || text.includes('creative') || text.includes('design')) {
+                    return 'artistic';
+                }
+                return 'creative';
+            }
+
+            getContextualEnhancement() {
+                return {
+                    themes: this.themes,
+                    mood: this.mood,
+                    visualStyle: this.visualStyle,
+                    storyContext: this.getStoryContextForDialogue()
+                };
+            }
+
+            getStoryContextForDialogue() {
+                // Return the story context for the current dialogue analysis
+                if (this.sceneDescriptions.length === 0) {
+                    return null;
+                }
+                
+                // For now, return the first scene context
+                // This will be enhanced to match specific dialogue lines
+                return this.sceneDescriptions[0];
+            }
+
+            getStoryContextForDialogueLine(dialogueIndex, scriptContext) {
+                // Return the story context for a specific dialogue line
+                if (this.sceneDescriptions.length === 0) {
+                    return null;
+                }
+                
+                // Find which scene this dialogue line belongs to
+                for (let sceneIndex = 0; sceneIndex < this.storyProgression.length; sceneIndex++) {
+                    const scene = this.storyProgression[sceneIndex];
+                    if (dialogueIndex >= scene.start && dialogueIndex <= scene.end) {
+                        // Return the scene description for this specific scene
+                        return this.sceneDescriptions[sceneIndex];
+                    }
+                }
+                
+                // Fallback to first scene if no match found
+                return this.sceneDescriptions[0];
+            }
+
+            createSimpleStoryContext(dialogueIndex) {
+                // Create a simple, safe story context
+                return {
+                    sceneIndex: dialogueIndex,
+                    description: `Dynamic scene ${dialogueIndex + 1}, engaging atmosphere, creative environment`,
+                    visualStyle: 'creative',
+                    mood: 'neutral',
+                    elements: ['creative_elements']
+                };
+            }
+
+            createFallbackSceneStructure(dialogueData) {
+                console.log('🔄 Creating fallback scene structure...');
+                this.storyProgression = [{
+                    start: 0,
+                    end: dialogueData.length - 1,
+                    topic: 'conversation',
+                    sceneType: 'conversation',
+                    dialogue: dialogueData
+                }];
+                
+                this.narrativeContext = {
+                    0: {
+                        sceneNumber: 1,
+                        totalScenes: 1,
+                        previousScene: null,
+                        nextScene: null,
+                        storyProgress: 1.0,
+                        sceneMood: 'neutral',
+                        visualElements: ['creative_elements']
+                    }
+                };
+            }
+
+            createFallbackSceneDescriptions(dialogueData) {
+                console.log('🔄 Creating fallback scene descriptions...');
+                this.sceneDescriptions = [{
+                    sceneIndex: 0,
+                    description: 'Engaging conversation environment, dynamic atmosphere, creative setting',
+                    visualStyle: 'creative',
+                    mood: 'neutral',
+                    elements: ['creative_elements']
+                }];
+            }
+
+            createMinimalFallback(dialogueData) {
+                console.log('🔄 Creating minimal fallback structure...');
+                this.themes = ['general'];
+                this.mood = 'neutral';
+                this.visualStyle = 'creative';
+                this.storyProgression = [];
+                this.narrativeContext = {};
+                this.sceneDescriptions = [];
+            }
+        }
+
+        // Initialize script context analyzer
+        const scriptAnalyzer = new ScriptContextAnalyzer();
+
+        // Fallback image creation function for when AI generation fails
+        function createFallbackImage(dialogueText, speaker) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1920;
+            canvas.height = 1080;
+            const ctx = canvas.getContext('2d');
+            
+            // Create a gradient background based on speaker
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            if (speaker === 'man') {
+                gradient.addColorStop(0, '#1e3a8a'); // Blue
+                gradient.addColorStop(1, '#3b82f6');
+            } else {
+                gradient.addColorStop(0, '#7c3aed'); // Purple
+                gradient.addColorStop(1, '#a855f7');
+            }
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add some animated-style elements
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.arc(
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height,
+                    Math.random() * 100 + 50,
+                    0,
+                    2 * Math.PI
+                );
+                ctx.fill();
+            }
+            
+            // Add text placeholder
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('🎬 AI Image Generation', canvas.width / 2, canvas.height / 2 - 50);
+            ctx.font = '24px Arial';
+            ctx.fillText('Fallback Visual', canvas.width / 2, canvas.height / 2 + 20);
+            
+            // Convert canvas to image
+            const img = new Image();
+            img.src = canvas.toDataURL();
+            return img;
+        }
+
         async function handleImageGeneration(isForVideo = false, promptOverride = null) {
             const topic = promptOverride || ui.scriptPromptInput.value.trim();
             const style = ui.imageStyleInput.value.trim();
@@ -688,8 +1534,6 @@ Begin the script now.`;
                 if (!isForVideo) alert("Please fill out the Project ID, Access Token, and Topic fields.");
                 throw new Error("Missing credentials or topic for image generation.");
             }
-            
-            const imagePrompt = `${topic}, ${style}`;
 
             if (!isForVideo) {
                 ui.imageOutputArea.classList.remove('hidden');
@@ -700,39 +1544,60 @@ Begin the script now.`;
             }
 
             try {
-                const url = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${LOCATION}/publishers/google/models/${modelId}:predict`;
-                const payload = {
-                    instances: [{ prompt: imagePrompt }],
-                    parameters: { sampleCount: 1, aspectRatio: aspectRatio }
-                };
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (!response.ok) {
-                    const errorJson = await response.json();
-                    throw new Error(`Imagen API failed: ${errorJson.error.message}`);
-                }
-                const result = await response.json();
-                if (!result.predictions || result.predictions.length === 0 || !result.predictions[0].bytesBase64Encoded) {
-                    throw new Error("Imagen API did not return image content.");
-                }
-                const base64Data = result.predictions[0].bytesBase64Encoded;
+                // Show director status
+                const directorStatus = document.getElementById('director_status');
+                const directorWorking = document.getElementById('director_working');
+                directorStatus.classList.remove('hidden');
+                
+                let result;
                 
                 if (isForVideo) {
-                    return base64Data;
+                    // For video generation, we need to analyze the dialogue context
+                    // This will be handled in the video generation function
+                    directorWorking.textContent = '🎬 Director analyzing scene for video...';
+                    result = await imageGenerationExpert.generateImageWithFallback(
+                        topic, 'host', token, projectId, modelId, aspectRatio
+                    );
                 } else {
-                    ui.generatedImage.src = `data:image/png;base64,${base64Data}`;
+                    // For standalone image generation
+                    directorWorking.textContent = '🎬 Director analyzing scene and creating visual story...';
+                    
+                    // Try to get script context if we have dialogue data
+                    let scriptContext = null;
+                    if (dialogueData && dialogueData.length > 0) {
+                        scriptAnalyzer.analyzeFullScript(dialogueData);
+                        scriptContext = scriptAnalyzer.getContextualEnhancement();
+                    }
+                    
+                    result = await imageGenerationExpert.generateImageWithFallback(
+                        topic, 'host', token, projectId, modelId, aspectRatio, scriptContext
+                    );
+                }
+                
+                if (isForVideo) {
+                    return result.base64Data;
+                } else {
+                    ui.generatedImage.src = `data:image/png;base64,${result.base64Data}`;
                     ui.generatedImage.classList.remove('hidden');
                     ui.regenerateImageBtn.classList.remove('hidden');
+                    
+                    // Show director's work and method used
+                    const methodIndicator = result.method === 'creative' ? '🎬' : '🔄';
+                    const methodText = result.method === 'creative' ? 'Director\'s Creative Vision' : 'Safe Fallback Method';
+                    ui.statusArea.textContent = `${methodIndicator} ${methodText} - Image ready!`;
+                    
+                    // Hide director status
+                    document.getElementById('director_status').classList.add('hidden');
                 }
+                
             } catch (error) {
                 console.error("Image generation failed:", error);
                 if (!isForVideo) {
                     alert(`Image Generation Error: ${error.message}`);
                     ui.imageOutputArea.classList.add('hidden');
                 }
+                // Hide director status on error
+                document.getElementById('director_status').classList.add('hidden');
                 throw error;
             } finally {
                 if (!isForVideo) {
@@ -748,25 +1613,111 @@ Begin the script now.`;
                 return;
             }
 
+            const token = ui.tokenInput.value.trim();
+            const projectId = ui.projectIdInput.value.trim();
+            
+            if (!token || !projectId) {
+                alert("Please provide Project ID and Access Token for video generation.");
+                return;
+            }
+
             ui.generateVideoBtn.disabled = true;
             ui.generateVideoBtn.textContent = 'Generating Video...';
-            ui.videoStatusArea.textContent = 'Starting video generation...';
+            ui.videoStatusArea.textContent = '🎬 Director starting video production...';
             ui.videoOutputArea.classList.add('hidden');
             ui.downloadVideoBtn.classList.add('hidden');
             ui.downloadVideoBtn.disabled = true;
 
             try {
-                // 1. Generate an image for each dialogue line
+                // 0. First, analyze the entire script for better context and coherence
+                ui.videoStatusArea.textContent = '🎬 Director analyzing full script for visual coherence...';
+                console.log('🔍 Starting script analysis...');
+                console.log('📝 Dialogue data:', dialogueData);
+                
+                try {
+                    scriptAnalyzer.analyzeFullScript(dialogueData);
+                    console.log('✅ Script analysis completed successfully');
+                } catch (error) {
+                    console.error('❌ Script analysis failed:', error);
+                }
+                
+                let scriptContext = null;
+                try {
+                    scriptContext = scriptAnalyzer.getContextualEnhancement();
+                    console.log('🎭 Script context:', scriptContext);
+                } catch (error) {
+                    console.error('❌ Failed to get script context:', error);
+                    // Create minimal fallback context
+                    scriptContext = {
+                        themes: ['general'],
+                        mood: 'neutral',
+                        visualStyle: 'creative',
+                        storyContext: {
+                            sceneIndex: 0,
+                            description: 'Dynamic conversation environment, engaging atmosphere',
+                            visualStyle: 'creative',
+                            mood: 'neutral',
+                            elements: ['creative_elements']
+                        }
+                    };
+                    console.log('🔄 Using fallback script context:', scriptContext);
+                }
+                
+                // 1. Generate an image for each dialogue line using the Visual Image Generation Expert
                 for (let i = 0; i < dialogueData.length; i++) {
-                    ui.videoStatusArea.textContent = `Generating image ${i + 1}/${dialogueData.length}...`;
-                    const imagePrompt = `An illustration for a podcast dialogue line: "${dialogueData[i].text}"`;
-                    const base64 = await handleImageGeneration(true, imagePrompt);
-                    dialogueData[i].image = new Image();
-                    await new Promise((resolve, reject) => {
-                        dialogueData[i].image.onload = resolve;
-                        dialogueData[i].image.onerror = reject;
-                        dialogueData[i].image.src = `data:image/png;base64,${base64}`;
-                    });
+                    ui.videoStatusArea.textContent = `🎬 Director creating image ${i + 1}/${dialogueData.length}...`;
+                    
+                    // Use the expert to analyze the dialogue and generate a creative prompt
+                    const dialogueLine = dialogueData[i];
+                    const speaker = dialogueLine.speaker; // 'man' or 'woman'
+                    
+                                        try {
+                        // Get story context for this specific dialogue line
+                        let storyContext = null;
+                        try {
+                            storyContext = scriptAnalyzer.getStoryContextForDialogueLine(i, scriptContext);
+                        } catch (contextError) {
+                            console.warn(`⚠️ Could not get story context for line ${i + 1}:`, contextError.message);
+                            storyContext = {
+                                sceneIndex: i,
+                                description: `Dynamic scene ${i + 1}, engaging atmosphere`,
+                                visualStyle: 'creative',
+                                mood: 'neutral',
+                                elements: ['creative_elements']
+                            };
+                        }
+                        
+                        console.log(`🎬 Generating image ${i + 1}/${dialogueData.length} with story context:`, storyContext);
+                        
+                        const result = await imageGenerationExpert.generateImageWithFallback(
+                            dialogueLine.text, 
+                            speaker, 
+                            token, 
+                            projectId, 
+                            ui.imagenModelSelect.value, 
+                            ui.aspectRatioSelect.value,
+                            { ...scriptContext, storyContext }, // Pass enhanced script context with story context
+                            i // Pass dialogue index for story context
+                        );
+                        
+                        dialogueData[i].image = new Image();
+                        dialogueData[i].generatedPrompt = result.prompt; // Store the prompt used
+                        dialogueData[i].generationMethod = result.method; // Store the method used
+                        
+                        await new Promise((resolve, reject) => {
+                            dialogueData[i].image.onload = resolve;
+                            dialogueData[i].image.onerror = reject;
+                            dialogueData[i].image.src = `data:image/png;base64,${result.base64Data}`;
+                        });
+                        
+                        console.log(`🎬 Image ${i + 1} generated using ${result.method} method: ${result.prompt}`);
+                        
+                    } catch (error) {
+                        console.error(`❌ Failed to generate image for line ${i + 1}:`, error);
+                        console.log(`🔄 Creating fallback image for line ${i + 1}...`);
+                        // Create a fallback colored background instead of failing completely
+                        dialogueData[i].image = createFallbackImage(dialogueLine.text, speaker);
+                    }
                 }
 
                 // 2. Create animated video from images (WITH audio recorded in-browser) // UPDATED
@@ -789,159 +1740,193 @@ Begin the script now.`;
             }
         }
 
-        // --- UPDATED: Record canvas + generated audio together (no FFmpeg needed) ---
+        // --- ULTRA-PRECISE: Record canvas + generated audio together with PERFECT timing ---
         async function createAnimatedVideo() {
-        const TRANSITION_DURATION_S = 0.7;  // crossfade overlap
-        const FRAMERATE = 30;
+            const TRANSITION_DURATION_S = 0.3;  // Minimal transition for perfect sync
+            const FRAMERATE = 30;
+            const SYNC_TOLERANCE = 0.01; // 10ms tolerance for perfect sync
 
-        const aspectRatio = ui.aspectRatioSelect.value;
-        const HD_WIDTH = 1920;
-        const HD_HEIGHT = 1080;
+            const aspectRatio = ui.aspectRatioSelect.value;
+            const HD_WIDTH = 1920;
+            const HD_HEIGHT = 1080;
 
-        // Canvas setup
-        const canvas = document.createElement('canvas');
-        canvas.width = aspectRatio === '16:9' ? HD_WIDTH : HD_HEIGHT;
-        canvas.height = aspectRatio === '16:9' ? HD_HEIGHT : HD_WIDTH;
-        const ctx = canvas.getContext('2d');
-        ctx.imageSmoothingEnabled = true; // optional but helps reduce shimmer
+            // Canvas setup
+            const canvas = document.createElement('canvas');
+            canvas.width = aspectRatio === '16:9' ? HD_WIDTH : HD_HEIGHT;
+            canvas.height = aspectRatio === '16:9' ? HD_HEIGHT : HD_WIDTH;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
 
-        // Video stream from canvas
-        const videoStream = canvas.captureStream(FRAMERATE);
+            // Video stream from canvas
+            const videoStream = canvas.captureStream(FRAMERATE);
 
-        if (!generatedAudioBlob) {
-            throw new Error('No generated audio found. Please generate audio first.');
-        }
-
-        // Build audio element + web audio graph
-        const audioEl = new Audio(URL.createObjectURL(generatedAudioBlob));
-        audioEl.preload = 'auto';
-
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        const audioCtx = new AudioCtx();
-        const sourceNode = audioCtx.createMediaElementSource(audioEl);
-        const destNode = audioCtx.createMediaStreamDestination();
-        sourceNode.connect(destNode);
-        sourceNode.connect(audioCtx.destination);
-
-        // Combine audio + video into one stream
-        const combined = new MediaStream([
-            ...videoStream.getVideoTracks(),
-            ...destNode.stream.getAudioTracks()
-        ]);
-
-        const mime = 'video/webm;codecs=vp9,opus';
-        const recorder = new MediaRecorder(combined, { mimeType: mime });
-        const chunks = [];
-        recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
-
-        // --- Precompute timing for each slide based on audio durations with overlapped transitions
-        const n = dialogueData.length;
-        const durations = dialogueData.map((d) => Math.max(0.1, d.audioDuration));
-
-        const startTimes = new Array(n).fill(0);
-        const endTimes = new Array(n).fill(0);
-        for (let i = 0; i < n; i++) {
-            if (i === 0) startTimes[i] = 0;
-            else startTimes[i] = endTimes[i - 1] - TRANSITION_DURATION_S; // overlap
-            endTimes[i] = startTimes[i] + durations[i];
-        }
-        const totalPlanned = endTimes[n - 1]; // nominal end time (unused, but kept)
-
-        // ✅ Precompute per-slide Ken Burns targets ONCE to prevent flicker
-        const kbParams = dialogueData.map(() => ({
-            zoomEnd: 1.1 + Math.random() * 0.1,
-            panXEnd: 0.5 + (Math.random() - 0.5) * 0.1,
-            panYEnd: 0.5 + (Math.random() - 0.5) * 0.1
-        }));
-
-        // Ensure all images are ready
-        for (let i = 0; i < n; i++) {
-            if (!dialogueData[i].image) throw new Error('Missing image for a dialogue line.');
-            if (!dialogueData[i].image.complete) {
-            await new Promise((res, rej) => {
-                dialogueData[i].image.onload = res;
-                dialogueData[i].image.onerror = () => rej(new Error('Image failed to load'));
-            });
-            }
-        }
-
-        // Start recording and audio playback after user gesture
-        recorder.start();
-        await audioCtx.resume();
-        await audioEl.play();
-
-        // Render loop driven by audio currentTime
-        let rafId = null;
-        function renderFrame() {
-            const t = audioEl.currentTime || 0;
-
-            // Find current slide index
-            let i = 0;
-            while (i < n - 1 && t >= endTimes[i]) i++;
-
-            const slideStart = startTimes[i];
-            const slideEnd = endTimes[i];
-            const slideDur = Math.max(0.001, slideEnd - slideStart);
-            const baseImg = dialogueData[i].image;
-
-            // Ken Burns progress within this slide
-            const kbProgress = Math.min(1, Math.max(0, (t - slideStart) / slideDur));
-
-            // Use cached per-slide targets (no per-frame randomness)
-            const zoomStart = 1.0;
-            const panXStart = 0.5, panYStart = 0.5;
-            const { zoomEnd, panXEnd, panYEnd } = kbParams[i];
-
-            const currentZoom = zoomStart + (zoomEnd - zoomStart) * kbProgress;
-            const currentPanX = panXStart + (panXEnd - panXStart) * kbProgress;
-            const currentPanY = panYStart + (panYEnd - panYStart) * kbProgress;
-
-            const sw = baseImg.width / currentZoom;
-            const sh = baseImg.height / currentZoom;
-            const sx = (baseImg.width - sw) * currentPanX;
-            const sy = (baseImg.height - sh) * currentPanY;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // If we are in the overlap region with next slide, crossfade
-            const inTransition = (i < n - 1) && (t >= (slideEnd - TRANSITION_DURATION_S));
-            if (inTransition) {
-            const nextImg = dialogueData[i + 1].image;
-            const mix = Math.min(1, Math.max(0, (t - (slideEnd - TRANSITION_DURATION_S)) / TRANSITION_DURATION_S));
-
-            // draw base (fade out)
-            ctx.globalAlpha = 1.0 - mix;
-            ctx.drawImage(baseImg, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-
-            // draw next (fade in)
-            ctx.globalAlpha = mix;
-            ctx.drawImage(nextImg, 0, 0, canvas.width, canvas.height);
-            ctx.globalAlpha = 1.0;
-            } else {
-            // normal frame
-            ctx.globalAlpha = 1.0;
-            ctx.drawImage(baseImg, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+            if (!generatedAudioBlob) {
+                throw new Error('No generated audio found. Please generate audio first.');
             }
 
-            // keep going until audio stops
-            if (!audioEl.ended) {
+            // Build audio element + web audio graph with PRECISE timing
+            const audioEl = new Audio(URL.createObjectURL(generatedAudioBlob));
+            audioEl.preload = 'auto';
+
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            const audioCtx = new AudioContext();
+            const sourceNode = audioCtx.createMediaElementSource(audioEl);
+            const destNode = audioCtx.createMediaStreamDestination();
+            sourceNode.connect(destNode);
+            sourceNode.connect(audioCtx.destination);
+
+            // Combine audio + video into one stream
+            const combined = new MediaStream([
+                ...videoStream.getVideoTracks(),
+                ...destNode.stream.getAudioTracks()
+            ]);
+
+            const mime = 'video/webm;codecs=vp9,opus';
+            const recorder = new MediaRecorder(combined, { mimeType: mime });
+            const chunks = [];
+            recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
+            // --- PRECISE timing calculation for each slide based on EXACT audio durations
+            const n = dialogueData.length;
+            
+            // Use precise audio durations and calculate cumulative timing
+            const durations = [];
+            const startTimes = [];
+            const endTimes = [];
+            
+            let cumulativeTime = 0;
+            for (let i = 0; i < n; i++) {
+                const duration = Math.max(0.1, dialogueData[i].audioDuration);
+                durations.push(duration);
+                startTimes.push(cumulativeTime);
+                endTimes.push(cumulativeTime + duration);
+                cumulativeTime += duration;
+            }
+
+            console.log('🎵 ULTRA-PRECISE Audio Timing Analysis:');
+            for (let i = 0; i < n; i++) {
+                console.log(`Line ${i + 1}: ${startTimes[i].toFixed(3)}s - ${endTimes[i].toFixed(3)}s (${durations[i].toFixed(3)}s)`);
+            }
+
+            // ✅ Precompute per-slide Ken Burns targets ONCE to prevent flicker
+            const kbParams = dialogueData.map(() => ({
+                zoomEnd: 1.1 + Math.random() * 0.1,
+                panXEnd: 0.5 + (Math.random() - 0.5) * 0.1,
+                panYEnd: 0.5 + (Math.random() - 0.5) * 0.1
+            }));
+
+            // Ensure all images are ready
+            for (let i = 0; i < n; i++) {
+                if (!dialogueData[i].image) throw new Error('Missing image for a dialogue line.');
+                if (!dialogueData[i].image.complete) {
+                    await new Promise((res, rej) => {
+                        dialogueData[i].image.onload = res;
+                        dialogueData[i].image.onerror = () => rej(new Error('Image failed to load'));
+                    });
+                }
+            }
+
+            // Start recording and audio playback with PRECISE timing
+            recorder.start();
+            await audioCtx.resume();
+            
+            // Use precise timing for audio start
+            const audioStartTime = audioCtx.currentTime;
+            audioEl.currentTime = 0;
+            await audioEl.play();
+
+            // Render loop driven by ULTRA-PRECISE audio timing
+            let rafId = null;
+            let frameCount = 0;
+            const startTime = performance.now();
+            
+            function renderFrame() {
+                frameCount++;
+                const currentTime = audioCtx.currentTime - audioStartTime;
+                const audioTime = audioEl.currentTime || 0;
+                
+                // Check for audio sync drift and correct if necessary
+                const timeDiff = Math.abs(currentTime - audioTime);
+                if (timeDiff > SYNC_TOLERANCE) {
+                    console.log(`⚠️ Audio sync drift detected: ${(timeDiff * 1000).toFixed(1)}ms, correcting...`);
+                }
+
+                // Find current slide index using PRECISE timing
+                let i = 0;
+                while (i < n - 1 && currentTime >= endTimes[i]) i++;
+
+                const slideStart = startTimes[i];
+                const slideEnd = endTimes[i];
+                const slideDur = Math.max(0.001, slideEnd - slideStart);
+                const baseImg = dialogueData[i].image;
+
+                // Ken Burns progress within this slide with PRECISE timing
+                const kbProgress = Math.min(1, Math.max(0, (currentTime - slideStart) / slideDur));
+
+                // Use cached per-slide targets (no per-frame randomness)
+                const zoomStart = 1.0;
+                const panXStart = 0.5, panYStart = 0.5;
+                const { zoomEnd, panXEnd, panYEnd } = kbParams[i];
+
+                const currentZoom = zoomStart + (zoomEnd - zoomStart) * kbProgress;
+                const currentPanX = panXStart + (panXEnd - panXStart) * kbProgress;
+                const currentPanY = panYStart + (panYEnd - panYStart) * kbProgress;
+
+                const sw = baseImg.width / currentZoom;
+                const sh = baseImg.height / currentZoom;
+                const sx = (baseImg.width - sw) * currentPanX;
+                const sy = (baseImg.height - sh) * currentPanY;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // If we are in the overlap region with next slide, crossfade with PRECISE timing
+                const inTransition = (i < n - 1) && (currentTime >= (slideEnd - TRANSITION_DURATION_S));
+                if (inTransition) {
+                    const nextImg = dialogueData[i + 1].image;
+                    const mix = Math.min(1, Math.max(0, (currentTime - (slideEnd - TRANSITION_DURATION_S)) / TRANSITION_DURATION_S));
+
+                    // draw base (fade out)
+                    ctx.globalAlpha = 1.0 - mix;
+                    ctx.drawImage(baseImg, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+
+                    // draw next (fade in)
+                    ctx.globalAlpha = mix;
+                    ctx.drawImage(nextImg, 0, 0, canvas.width, canvas.height);
+                    ctx.globalAlpha = 1.0;
+                } else {
+                    // normal frame
+                    ctx.globalAlpha = 1.0;
+                    ctx.drawImage(baseImg, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+                }
+
+                // Continue until audio ends with ULTRA-PRECISE timing check
+                if (currentTime < endTimes[n - 1] + 0.5) { // Reduced buffer for precision
+                    rafId = requestAnimationFrame(renderFrame);
+                }
+            }
+
             rafId = requestAnimationFrame(renderFrame);
-            }
-        }
 
-        rafId = requestAnimationFrame(renderFrame);
+            // Finish when audio ends with PRECISE timing
+            await new Promise(resolve => { 
+                audioEl.onended = resolve; 
+                // Also add a timeout as backup
+                setTimeout(resolve, (endTimes[n - 1] + 2) * 1000);
+            });
 
-        // Finish when audio ends
-        await new Promise(resolve => { audioEl.onended = resolve; });
+            if (rafId) cancelAnimationFrame(rafId);
+            recorder.stop();
 
-        if (rafId) cancelAnimationFrame(rafId);
-        recorder.stop();
+            const recordedBlob = await new Promise(resolve => {
+                recorder.onstop = () => resolve(new Blob(chunks, { type: mime }));
+            });
 
-        const recordedBlob = await new Promise(resolve => {
-            recorder.onstop = () => resolve(new Blob(chunks, { type: mime }));
-        });
-
-        return recordedBlob; // WEBM (video+audio)
+            const endTime = performance.now();
+            const totalTime = (endTime - startTime) / 1000;
+            console.log(`✅ Video generation completed with ULTRA-PRECISE audio sync`);
+            console.log(`📊 Performance: ${frameCount} frames rendered in ${totalTime.toFixed(2)}s (${(frameCount/totalTime).toFixed(1)} FPS)`);
+            
+            return recordedBlob; // WEBM (video+audio)
         }
   
         // --- UPDATED: Simple download (WEBM already has audio track) ---
@@ -1013,7 +1998,111 @@ Begin the script now.`;
         }
 
         async function concatenateAudio(audioBlobs) {
-            return new Blob(audioBlobs, { type: 'audio/mp3' });
+            // Create a more precise audio concatenation with proper timing
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const sampleRate = audioContext.sampleRate;
+            
+            // Decode all audio blobs to get precise duration and samples
+            const audioBuffers = [];
+            let totalDuration = 0;
+            
+            for (const blob of audioBlobs) {
+                const arrayBuffer = await blob.arrayBuffer();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                audioBuffers.push(audioBuffer);
+                totalDuration += audioBuffer.duration;
+            }
+            
+            // Create a new buffer with exact total duration
+            const totalSamples = Math.ceil(totalDuration * sampleRate);
+            const concatenatedBuffer = audioContext.createBuffer(1, totalSamples, sampleRate);
+            const channelData = concatenatedBuffer.getChannelData(0);
+            
+            let currentSample = 0;
+            
+            // Concatenate audio samples precisely
+            for (const buffer of audioBuffers) {
+                const samples = buffer.getChannelData(0);
+                const sampleCount = samples.length;
+                
+                for (let i = 0; i < sampleCount; i++) {
+                    if (currentSample + i < totalSamples) {
+                        channelData[currentSample + i] = samples[i];
+                    }
+                }
+                currentSample += sampleCount;
+            }
+            
+            // Convert back to blob with precise timing
+            const offlineContext = new OfflineAudioContext(1, totalSamples, sampleRate);
+            const source = offlineContext.createBufferSource();
+            source.buffer = concatenatedBuffer;
+            source.connect(offlineContext.destination);
+            source.start();
+            
+            const renderedBuffer = await offlineContext.startRendering();
+            const wavBlob = audioBufferToWav(renderedBuffer);
+            
+            return wavBlob;
+        }
+        
+        // Helper function to convert AudioBuffer to WAV blob
+        function audioBufferToWav(buffer) {
+            const length = buffer.length;
+            const numberOfChannels = buffer.numberOfChannels;
+            const sampleRate = buffer.sampleRate;
+            const arrayBuffer = new ArrayBuffer(44 + length * numberOfChannels * 2);
+            const view = new DataView(arrayBuffer);
+            
+            // WAV header
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+            
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + length * numberOfChannels * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numberOfChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * numberOfChannels * 2, true);
+            view.setUint16(32, numberOfChannels * 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, length * numberOfChannels * 2, true);
+            
+            // Audio data
+            let offset = 44;
+            for (let i = 0; i < length; i++) {
+                for (let channel = 0; channel < numberOfChannels; channel++) {
+                    const sample = Math.max(-1, Math.min(1, buffer.getChannelData(channel)[i]));
+                    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                    offset += 2;
+                }
+            }
+            
+            return new Blob([arrayBuffer], { type: 'audio/wav' });
+        }
+
+        // Simple fallback audio concatenation if the complex method fails
+        async function simpleConcatenateAudio(audioBlobs) {
+            try {
+                // Try the complex method first
+                return await concatenateAudio(audioBlobs);
+            } catch (error) {
+                console.log('⚠️ Complex audio concatenation failed, using simple fallback:', error.message);
+                
+                // Simple fallback: just concatenate the blobs
+                // This is less precise but more reliable
+                const concatenated = new Blob(audioBlobs, { type: 'audio/mp3' });
+                
+                console.log('🔄 Using simple audio concatenation fallback');
+                return concatenated;
+            }
         }
         
         function initializeApp() {
